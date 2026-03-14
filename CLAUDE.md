@@ -79,15 +79,6 @@ audionlabs/
 - Merged backend (main.py + config.py) -- DONE
 - SEO meta tags on all pages -- DONE
 
-## Build Order
-1. ~~Project setup + copy engines from both projects~~ DONE
-2. ~~Merged main.py with all routes~~ DONE
-3. ~~Landing page (index.html)~~ DONE
-4. ~~Stems page~~ DONE
-5. ~~Slowed+reverb page~~ DONE
-6. ~~YouTube downloader page~~ DONE
-7. ~~SEO meta tags on all pages~~ DONE
-
 ## Known Issues
 - torch/torchaudio pinned to 2.10.0+cpu (Python 3.14)
 - FFmpeg must be installed system-wide
@@ -95,7 +86,6 @@ audionlabs/
 - Demucs not yet tested end-to-end in merged app
 - Slowed+reverb not yet tested in merged app
 - YouTube downloader → AudionLabs pipeline not yet tested
-- SEO meta tags added but not verified
 
 ## Next Session Priorities
 1. Full stress test — stems, slowed+reverb, YouTube downloader
@@ -107,4 +97,4 @@ audionlabs/
 - Single port: 8000
 - No cross-server calls — downloader and processor are in same app
 - Keep MVAT_stem_webapp and audionlabs-downloader repos intact
-  (archive, don't delete)
+- Run server: uvicorn backend.main:app --port 8000
