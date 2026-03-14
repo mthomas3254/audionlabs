@@ -824,8 +824,8 @@ main {
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 7rem 1.25rem 3rem;
-  min-height: unset;
+  min-height: 100vh;
+  padding: 6rem 1.25rem 3rem;
 }
 
 .hero h1 {
