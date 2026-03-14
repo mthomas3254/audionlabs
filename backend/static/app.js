@@ -303,6 +303,10 @@
     var audionlabsResults = document.getElementById("audionlabs-results");
     var alResultsStems    = document.getElementById("al-results-stems");
     var alResultsSlowed   = document.getElementById("al-results-slowed");
+    var alProgressContainer = document.getElementById("al-progress-container");
+    var alProgressFill      = document.getElementById("al-progress-fill");
+    var alProgressText      = document.getElementById("al-progress-text");
+    var alProgressTimer     = null;
 
     var selectedFormat = "mp3";
     var lastFilePath = null;
@@ -432,6 +436,51 @@
       }
     });
 
+    // --- AudionLabs progress simulation ---
+    function startAlProgress(wantsStems, wantsSlowed) {
+      var stages = [["Uploading...", 8, 1500]];
+      if (wantsStems) stages.push(["Separating stems...", 62, 50000]);
+      if (wantsSlowed) stages.push(["Applying slowed reverb...", wantsStems ? 82 : 78, 10000]);
+      stages.push(["Finalizing...", 94, 3000]);
+
+      var stageIndex = 0;
+      var currentPct = 0;
+
+      function runStage() {
+        if (stageIndex >= stages.length) return;
+        var label = stages[stageIndex][0];
+        var targetPct = stages[stageIndex][1];
+        var duration = stages[stageIndex][2];
+        alProgressText.textContent = label;
+
+        var startPct = currentPct;
+        var delta = targetPct - startPct;
+        var intervalMs = 120;
+        var steps = Math.max(1, Math.round(duration / intervalMs));
+        var step = 0;
+
+        if (alProgressTimer) clearInterval(alProgressTimer);
+        alProgressTimer = setInterval(function () {
+          step++;
+          var t = step / steps;
+          var eased = 1 - Math.pow(1 - t, 2);
+          currentPct = startPct + delta * eased;
+          alProgressFill.style.width = Math.min(currentPct, 100) + "%";
+          if (step >= steps) {
+            clearInterval(alProgressTimer);
+            alProgressTimer = null;
+            stageIndex++;
+            runStage();
+          }
+        }, intervalMs);
+      }
+      runStage();
+    }
+
+    function stopAlProgress() {
+      if (alProgressTimer) { clearInterval(alProgressTimer); alProgressTimer = null; }
+    }
+
     // --- Process with AudionLabs (calls /process_audio directly) ---
     dlProcessBtn.addEventListener("click", async function () {
       if (!lastFilePath) return;
@@ -447,6 +496,10 @@
       clearDlError();
       dlProcessBtn.disabled = true;
       dlProcessBtn.textContent = "Processing...";
+
+      alProgressFill.style.width = "0%";
+      alProgressContainer.classList.remove("hidden");
+      startAlProgress(wantsStems, wantsSlowed);
 
       audionlabsResults.classList.add("hidden");
       alResultsStems.classList.add("hidden");
@@ -475,6 +528,10 @@
         }
 
         var data = await resp.json();
+
+        stopAlProgress();
+        alProgressText.textContent = "Done!";
+        alProgressFill.style.width = "100%";
 
         if (data.stems) {
           var container = alResultsStems.querySelector(".result-links");
@@ -509,10 +566,15 @@
 
         audionlabsResults.classList.remove("hidden");
       } catch (e) {
+        stopAlProgress();
         showDlError(e.message);
       } finally {
         dlProcessBtn.textContent = "Process with AudionLabs \u2192";
         dlProcessBtn.disabled = false;
+        setTimeout(function () {
+          alProgressContainer.classList.add("hidden");
+          alProgressFill.style.width = "0%";
+        }, 600);
       }
     });
 
