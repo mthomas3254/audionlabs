@@ -786,10 +786,12 @@ main {
 
 /* ── Tool page hero (smaller than landing) ── */
 .hero--tool {
-  min-height: auto;
-  padding-top: 6rem;
-  padding-bottom: 2rem;
-  margin-bottom: 0;
+  min-height: unset;
+  padding: 7rem 1.25rem 2rem;
+}
+
+.hero--tool + main {
+  padding-top: 0;
 }
 
 .hero--tool h1 {
