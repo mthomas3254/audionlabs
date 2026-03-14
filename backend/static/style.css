@@ -176,12 +176,15 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 1.25rem;
-  max-width: 520px;
+  width: 100%;
+  max-width: 560px;
   margin: 0 auto;
-  min-height: 100vh;
-  padding: 5rem 1rem 4rem;
+  padding: 1.5rem 1.25rem 4rem;
+}
+
+.page-header + main {
+  padding-top: 0.5rem;
 }
 
 /* ── Card ── */
