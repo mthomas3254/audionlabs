@@ -98,3 +98,44 @@ audionlabs/
 - No cross-server calls — downloader and processor are in same app
 - Keep MVAT_stem_webapp and audionlabs-downloader repos intact
 - Run server: uvicorn backend.main:app --port 8000
+
+## KNOWN BUGS — DO NOT REMOVE OR MODIFY THIS SECTION
+
+### Bug 1: torchaudio torchcodec save error
+- **Symptom:** Demucs processes audio successfully
+  (progress bar completes) but then throws:
+  "ImportError: TorchCodec is required for
+  save_with_torchcodec"
+- **Root cause:** torchaudio 2.9+ hardcodes torchcodec
+  as the default audio save backend. torchcodec requires
+  FFmpeg shared DLLs ("full-shared" build) which conflicts
+  with the static FFmpeg build installed on this system.
+  No torchaudio 2.8.x exists for Python 3.14.
+- **Fix:** sitecustomize.py monkey-patch in .venv that
+  replaces torchaudio.save with soundfile.write. Located at:
+  .venv/Lib/site-packages/sitecustomize.py
+  Also requires: pip install soundfile
+- **First encountered:** MVAT_stem_webapp (Python 3.11,
+  torch 2.5.1). Reappeared in audionlabs (Python 3.14,
+  torch 2.10.0). Will likely reappear on any new
+  environment.
+- **Prevention:** Always copy sitecustomize.py and install
+  soundfile when setting up a new venv. Do NOT install
+  torchcodec — it will fail on static FFmpeg builds.
+- **Status:** FIXED — sitecustomize.py patch active
+
+### Bug 2: sys.executable wrong Python on Windows
+- **Symptom:** Demucs or yt-dlp subprocess calls fail
+  with "No module named demucs/yt_dlp" even though
+  they are installed in the venv
+- **Root cause:** sys.executable resolves to the system
+  Python (C:\Python314\python.exe) instead of the venv
+  Python when uvicorn is started from a different context
+- **Fix:** Use explicit venv Python path in subprocess:
+  VENV_PYTHON = Path(__file__).resolve().parents[2] /
+  ".venv" / "Scripts" / "python.exe"
+  PYTHON = str(VENV_PYTHON) if VENV_PYTHON.exists()
+  else sys.executable
+- **First encountered:** audionlabs merged project
+- **Status:** FIXED — both demucs_engine.py and
+  downloader.py use VENV_PYTHON

@@ -7,5 +7,6 @@ aiofiles
 pydub
 torch==2.10.0+cpu
 torchaudio==2.10.0+cpu
+soundfile
 demucs
 --extra-index-url https://download.pytorch.org/whl/cpu
