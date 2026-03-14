@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AudionLabs — Professional Audio Tools for Creators</title>
+  <meta name="description" content="Split stems, create slowed+reverb versions, and download YouTube audio with AudionLabs AI audio tools.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<!-- Aurora -->
+<div class="aurora">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+</div>
+
+<!-- Navbar -->
+<nav id="main-nav">
+  <div class="nav-pill">
+    <a class="nav-wordmark" href="/">Audion<span>Labs</span></a>
+    <div class="nav-links">
+      <div class="nav-indicator"></div>
+      <a class="nav-item active" href="/">Home</a>
+      <a class="nav-item" href="/stems">Stems</a>
+      <a class="nav-item" href="/slowed-reverb">Slowed</a>
+      <a class="nav-item" href="/youtube-downloader">Download</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <h1>Professional Audio Tools</h1>
+  <p class="hero-sub">Split stems, slow tracks, and download YouTube audio — all in one place.</p>
+
+  <div class="tool-grid">
+
+    <!-- Stem Splitter -->
+    <a class="tool-card" href="/stems">
+      <div class="tool-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="3" x2="12" y2="12"/>
+          <line x1="12" y1="12" x2="5" y2="21"/>
+          <line x1="12" y1="12" x2="19" y2="21"/>
+        </svg>
+      </div>
+      <h2>Stem Splitter</h2>
+      <p>Isolate vocals, drums, bass and other from any track using Demucs AI.</p>
+      <span class="tool-cta">Try Stem Splitter →</span>
+    </a>
+
+    <!-- Slowed + Reverb -->
+    <a class="tool-card" href="/slowed-reverb">
+      <div class="tool-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 12h2l3-7 4 14 4-10 3 3h4"/>
+        </svg>
+      </div>
+      <h2>Slowed + Reverb</h2>
+      <p>Warm 6kHz low-pass with reverb tail. The signature slowed aesthetic, perfected.</p>
+      <span class="tool-cta">Try Slowed + Reverb →</span>
+    </a>
+
+    <!-- YouTube Downloader -->
+    <a class="tool-card" href="/youtube-downloader">
+      <div class="tool-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </div>
+      <h2>YouTube Downloader</h2>
+      <p>Download any YouTube video as MP3 or MP4, then process it directly with AudionLabs.</p>
+      <span class="tool-cta">Try Downloader →</span>
+    </a>
+
+  </div>
+</section>
+
+<!-- About -->
+<section class="about" id="about">
+  <h2>Built for Creators</h2>
+  <p>AudionLabs is a professional audio processing suite for YouTube creators, DJs, and remix artists. No installs. No setup. Just results.</p>
+</section>
+
+<!-- Footer -->
+<footer>© 2026 AudionLabs</footer>
+
+<script>
+  (function () {
+    var active = document.querySelector(".nav-item.active");
+    var indicator = document.querySelector(".nav-indicator");
+    function position() {
+      if (!active || !indicator) return;
+      indicator.style.width = active.offsetWidth + "px";
+      indicator.style.left = active.offsetLeft + "px";
+    }
+    position();
+    window.addEventListener("resize", position);
+  })();
+</script>
+
+</body>
+</html>

@@ -3,7 +3,7 @@ from pathlib import Path
 import subprocess
 from typing import Dict
 
-from ..config import SEPARATED_ROOT, DEMUCS_MODEL_NAME
+from ..config import SEPARATED_DIR, DEMUCS_MODEL
 from ..services.file_manager import TrackPaths
 
 STEM_NAMES = ["bass", "drums", "other", "vocals"]
@@ -24,9 +24,9 @@ def split_stems(track_paths: TrackPaths) -> Dict[str, Path]:
         "-m",
         "demucs",
         "-n",
-        DEMUCS_MODEL_NAME,
+        DEMUCS_MODEL,
         "-o",
-        str(SEPARATED_ROOT),
+        str(SEPARATED_DIR),
         str(input_path),
     ]
 

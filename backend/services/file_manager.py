@@ -3,11 +3,10 @@ from pathlib import Path
 import uuid
 
 from ..config import (
-    UPLOAD_DIR,
-    SEPARATED_ROOT,
-    LOFI_OUTPUT_DIR,
-    SLOWED_OUTPUT_DIR,
-    DEMUCS_MODEL_NAME,
+    UPLOADS_DIR,
+    SEPARATED_DIR,
+    SLOWED_DIR,
+    DEMUCS_MODEL,
 )
 
 
@@ -17,7 +16,6 @@ class TrackPaths:
     original_path: Path
     stems_dir: Path
     slowed_dir: Path
-    lofi_dir: Path
 
 
 def generate_track_id() -> str:
@@ -33,12 +31,11 @@ def create_track_paths(file_extension: str) -> TrackPaths:
     track_id = generate_track_id()
 
     # Per-track folders
-    upload_track_dir = UPLOAD_DIR / track_id
-    stems_dir = SEPARATED_ROOT / DEMUCS_MODEL_NAME / track_id
-    slowed_dir = SLOWED_OUTPUT_DIR / track_id
-    lofi_dir = LOFI_OUTPUT_DIR / track_id
+    upload_track_dir = UPLOADS_DIR / track_id
+    stems_dir = SEPARATED_DIR / DEMUCS_MODEL / track_id
+    slowed_dir = SLOWED_DIR / track_id
 
-    for d in [upload_track_dir, stems_dir, slowed_dir, lofi_dir]:
+    for d in [upload_track_dir, stems_dir, slowed_dir]:
         d.mkdir(parents=True, exist_ok=True)
 
     original_filename = f"{track_id}{file_extension}"
@@ -49,6 +46,4 @@ def create_track_paths(file_extension: str) -> TrackPaths:
         original_path=original_path,
         stems_dir=stems_dir,
         slowed_dir=slowed_dir,
-        lofi_dir=lofi_dir,
     )
-

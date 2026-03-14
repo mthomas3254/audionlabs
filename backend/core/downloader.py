@@ -2,7 +2,7 @@ import sys
 import subprocess
 from pathlib import Path
 
-from backend.config import DOWNLOADS_DIR
+from ..config import DOWNLOADS_DIR
 
 
 def download_media(url: str, format: str) -> Path:
