@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+yt-dlp
+python-multipart
+requests
+aiofiles
+pydub
+torch==2.5.1+cpu
+torchaudio==2.5.1+cpu
+demucs
+--extra-index-url https://download.pytorch.org/whl/cpu

@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+uploads/
+downloads/
+outputs/
+separated/
+slowed_outputs/
+dev_audio/
+node_modules/
+*.log
+.DS_Store
