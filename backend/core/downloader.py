@@ -4,6 +4,10 @@ from pathlib import Path
 
 from ..config import DOWNLOADS_DIR
 
+# Use venv python if available, fall back to sys.executable
+VENV_PYTHON = Path(__file__).resolve().parents[2] / ".venv" / "Scripts" / "python.exe"
+PYTHON = str(VENV_PYTHON) if VENV_PYTHON.exists() else sys.executable
+
 
 def download_media(url: str, format: str) -> Path:
     """Download a YouTube video as MP3 or MP4 using yt-dlp.
@@ -19,7 +23,7 @@ def download_media(url: str, format: str) -> Path:
 
     output_template = str(DOWNLOADS_DIR / "%(title)s.%(ext)s")
 
-    cmd = [sys.executable, "-m", "yt_dlp", "--no-playlist", "--restrict-filenames",
+    cmd = [PYTHON, "-m", "yt_dlp", "--no-playlist", "--restrict-filenames",
            "--print", "after_move:filepath"]
 
     if format == "mp3":

@@ -4,6 +4,10 @@ import subprocess
 from typing import Dict
 
 from ..config import SEPARATED_DIR, DEMUCS_MODEL
+
+# Use venv python if available, fall back to sys.executable
+VENV_PYTHON = Path(__file__).resolve().parents[2] / ".venv" / "Scripts" / "python.exe"
+PYTHON = str(VENV_PYTHON) if VENV_PYTHON.exists() else sys.executable
 from ..services.file_manager import TrackPaths
 
 STEM_NAMES = ["bass", "drums", "other", "vocals"]
@@ -20,7 +24,7 @@ def split_stems(track_paths: TrackPaths) -> Dict[str, Path]:
         raise FileNotFoundError(f"Original file not found: {input_path}")
 
     cmd = [
-        sys.executable,
+        PYTHON,
         "-m",
         "demucs",
         "-n",
