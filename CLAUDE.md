@@ -16,9 +16,9 @@ downloading. Each tool has its own SEO-optimized page.
 YouTube creators, TikTok creators, DJs, remix artists, producers
 
 ## Current Stack
-- Python + FastAPI (backend)
+- Python 3.14 + FastAPI (backend)
 - Uvicorn (ASGI server)
-- torch 2.10.0+cpu / torchaudio 2.10.0+cpu (Python 3.14 requires 2.9+)
+- torch==2.10.0+cpu / torchaudio==2.10.0+cpu (Python 3.14 compatible)
 - Demucs (stem separation via CLI subprocess)
 - FFmpeg + ffprobe (system-wide install required)
 - yt-dlp (YouTube downloading)
@@ -71,26 +71,36 @@ audionlabs/
 - Demucs model: htdemucs
 
 ## Current Status
-- Project setup -- IN PROGRESS
-- Landing page -- NOT STARTED
-- Stems page -- NOT STARTED
-- Slowed+reverb page -- NOT STARTED
-- YouTube downloader page -- NOT STARTED
-- Merged backend -- NOT STARTED
+- Project setup -- DONE
+- Landing page (index.html) -- DONE
+- Stems page (stems.html) -- DONE
+- Slowed+reverb page (slowed-reverb.html) -- DONE
+- YouTube downloader page (youtube-downloader.html) -- DONE
+- Merged backend (main.py + config.py) -- DONE
+- SEO meta tags on all pages -- DONE
 
 ## Build Order
-1. Project setup + copy engines from both projects
-2. Merged main.py with all routes
-3. Landing page (index.html)
-4. Stems page
-5. Slowed+reverb page
-6. YouTube downloader page
-7. SEO meta tags on all pages
+1. ~~Project setup + copy engines from both projects~~ DONE
+2. ~~Merged main.py with all routes~~ DONE
+3. ~~Landing page (index.html)~~ DONE
+4. ~~Stems page~~ DONE
+5. ~~Slowed+reverb page~~ DONE
+6. ~~YouTube downloader page~~ DONE
+7. ~~SEO meta tags on all pages~~ DONE
 
 ## Known Issues
 - torch/torchaudio pinned to 2.10.0+cpu (Python 3.14)
 - FFmpeg must be installed system-wide
 - Run without --reload flag on Windows to avoid zombie processes
+- Demucs not yet tested end-to-end in merged app
+- Slowed+reverb not yet tested in merged app
+- YouTube downloader → AudionLabs pipeline not yet tested
+- SEO meta tags added but not verified
+
+## Next Session Priorities
+1. Full stress test — stems, slowed+reverb, YouTube downloader
+2. Fix any bugs found during stress test
+3. Deployment planning (Railway / Render / DigitalOcean)
 
 ## Important Notes
 - This replaces both MVAT_stem_webapp and audionlabs-downloader
