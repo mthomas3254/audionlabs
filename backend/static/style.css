@@ -787,7 +787,10 @@ main {
 /* ── Tool page hero (smaller than landing) ── */
 .hero--tool {
   min-height: unset;
-  padding: 7rem 1.25rem 2rem;
+  padding: 5.5rem 1.25rem 1.5rem;
+  justify-content: flex-start;
+  align-items: center;
+  text-align: center;
 }
 
 .hero--tool + main {
