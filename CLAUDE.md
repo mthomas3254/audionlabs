@@ -79,22 +79,22 @@ audionlabs/
 - Merged backend (main.py + config.py) -- DONE
 - SEO meta tags on all pages -- DONE
 - Stem splitting end-to-end test -- DONE (working)
-- Slowed+reverb end-to-end test -- NOT STARTED
-- YouTube downloader end-to-end test -- NOT STARTED
+- Slowed+reverb end-to-end test -- DONE (working)
+- YouTube downloader end-to-end test -- DONE (working)
+- YouTube → AudionLabs pipeline test -- DONE (working)
+- All three tools fully tested end-to-end -- DONE
+- Progress bar on YouTube downloader processing -- DONE
 
 ## Known Issues
 - torch/torchaudio pinned to 2.10.0+cpu (Python 3.14)
 - FFmpeg must be installed system-wide (static build — no shared DLLs)
 - Run without --reload flag on Windows to avoid zombie processes
-- Slowed+reverb not yet tested in merged app
-- YouTube downloader → AudionLabs pipeline not yet tested
 
 ## Next Session Priorities
-1. Test slowed+reverb end-to-end
-2. Test YouTube downloader end-to-end
-3. Test YouTube → AudionLabs pipeline
-4. Fix any bugs found
-5. Deployment planning (Railway / Render / DigitalOcean)
+1. Deployment planning (Railway / Render / DigitalOcean)
+2. Custom domain setup (audionlabs.ai)
+3. Rate limiting + file size validation before public launch
+4. User accounts + auth (future)
 
 ## Important Notes
 - This replaces both MVAT_stem_webapp and audionlabs-downloader
