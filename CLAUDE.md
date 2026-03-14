@@ -18,7 +18,7 @@ YouTube creators, TikTok creators, DJs, remix artists, producers
 ## Current Stack
 - Python + FastAPI (backend)
 - Uvicorn (ASGI server)
-- torch 2.5.1+cpu / torchaudio 2.5.1+cpu (PINNED — do not upgrade)
+- torch 2.10.0+cpu / torchaudio 2.10.0+cpu (Python 3.14 requires 2.9+)
 - Demucs (stem separation via CLI subprocess)
 - FFmpeg + ffprobe (system-wide install required)
 - yt-dlp (YouTube downloading)
@@ -88,7 +88,7 @@ audionlabs/
 7. SEO meta tags on all pages
 
 ## Known Issues
-- torch/torchaudio MUST stay at 2.5.1+cpu
+- torch/torchaudio pinned to 2.10.0+cpu (Python 3.14)
 - FFmpeg must be installed system-wide
 - Run without --reload flag on Windows to avoid zombie processes
 
