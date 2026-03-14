@@ -784,25 +784,30 @@ main {
   margin-bottom: 0.25rem;
 }
 
-/* ── Tool page hero (smaller than landing) ── */
-.hero--tool {
-  min-height: unset;
-  padding: 5.5rem 1.25rem 1.5rem;
-  justify-content: flex-start;
-  align-items: center;
+/* ── Tool page header ── */
+.page-header {
+  position: relative;
+  z-index: 10;
   text-align: center;
+  padding: 6rem 1.25rem 1.5rem;
 }
 
-.hero--tool + main {
-  padding-top: 0;
-}
-
-.hero--tool h1 {
+.page-header h1 {
   font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #fff, var(--accent-light));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.5rem;
 }
 
-.hero--tool .hero-sub {
-  margin-bottom: 0;
+.page-sub {
+  font-size: 1rem;
+  color: var(--text-muted);
+  max-width: 480px;
+  margin: 0 auto;
 }
 
 /* ── Hero section ── */
