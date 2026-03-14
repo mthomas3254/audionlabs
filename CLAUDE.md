@@ -78,19 +78,23 @@ audionlabs/
 - YouTube downloader page (youtube-downloader.html) -- DONE
 - Merged backend (main.py + config.py) -- DONE
 - SEO meta tags on all pages -- DONE
+- Stem splitting end-to-end test -- DONE (working)
+- Slowed+reverb end-to-end test -- NOT STARTED
+- YouTube downloader end-to-end test -- NOT STARTED
 
 ## Known Issues
 - torch/torchaudio pinned to 2.10.0+cpu (Python 3.14)
-- FFmpeg must be installed system-wide
+- FFmpeg must be installed system-wide (static build — no shared DLLs)
 - Run without --reload flag on Windows to avoid zombie processes
-- Demucs not yet tested end-to-end in merged app
 - Slowed+reverb not yet tested in merged app
 - YouTube downloader → AudionLabs pipeline not yet tested
 
 ## Next Session Priorities
-1. Full stress test — stems, slowed+reverb, YouTube downloader
-2. Fix any bugs found during stress test
-3. Deployment planning (Railway / Render / DigitalOcean)
+1. Test slowed+reverb end-to-end
+2. Test YouTube downloader end-to-end
+3. Test YouTube → AudionLabs pipeline
+4. Fix any bugs found
+5. Deployment planning (Railway / Render / DigitalOcean)
 
 ## Important Notes
 - This replaces both MVAT_stem_webapp and audionlabs-downloader
@@ -139,3 +143,37 @@ audionlabs/
 - **First encountered:** audionlabs merged project
 - **Status:** FIXED — both demucs_engine.py and
   downloader.py use VENV_PYTHON
+
+### Bug 3: New venv setup checklist
+- **Symptom:** Multiple bugs appear when setting up
+  a new venv from requirements.txt alone
+- **Root cause:** Several fixes exist outside of
+  requirements.txt that won't be replicated by just
+  running pip install
+- **Fix:** When setting up a new venv, always do ALL
+  of these steps in order:
+  1. pip install -r requirements.txt
+  2. pip install soundfile
+  3. Copy sitecustomize_backup.py to
+     .venv/Lib/site-packages/sitecustomize.py
+  4. Verify demucs_engine.py and downloader.py use
+     VENV_PYTHON not sys.executable
+  5. Test with: .venv/Scripts/python.exe -c
+     "import torchaudio, torch, demucs; print('OK')"
+- **Status:** DOCUMENTED — follow checklist on new
+  environment setup
+
+## ENVIRONMENT SETUP CHECKLIST
+Run these steps IN ORDER when setting up on a new machine:
+
+1. python -m venv .venv
+2. .venv\Scripts\pip install -r requirements.txt
+3. .venv\Scripts\pip install soundfile
+4. Copy sitecustomize_backup.py to
+   .venv\Lib\site-packages\sitecustomize.py
+5. Verify FFmpeg is installed system-wide: ffmpeg -version
+6. Verify yt-dlp works: .venv\Scripts\python -m yt_dlp --version
+7. Test all imports: .venv\Scripts\python -c
+   "import fastapi, demucs, torchaudio, torch, yt_dlp; print('ALL OK')"
+8. Start server: python -m uvicorn backend.main:app --port 8000
+9. Health check: curl http://localhost:8000/health
