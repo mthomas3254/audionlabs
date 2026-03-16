@@ -81,6 +81,11 @@ async def youtube_downloader_page():
     return FileResponse(STATIC_DIR / "youtube-downloader.html")
 
 
+@app.get("/transcribe")
+async def transcribe_page():
+    return FileResponse(STATIC_DIR / "transcribe.html")
+
+
 # --- API routes ---
 
 @app.get("/health")
