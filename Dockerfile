@@ -35,5 +35,5 @@ RUN mkdir -p uploads downloads separated slowed_outputs transcripts
 # Expose port
 EXPOSE 8000
 
-# Start command — fallback if railway.toml startCommand is ignored
+# Start command — hardcoded port 8000 (set PORT=8000 in Railway Variables)
 CMD ["python", "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
