@@ -548,3 +548,22 @@ uvicorn processes that hold the port open.
 3. API access for third-party integrations
 4. Mobile-responsive redesign
 5. AI LoFi cover generation (from MVAT R&D module)
+
+---
+
+## PHASE 4 — PLANNED (Not Yet Built)
+
+### Transcribe Feature
+- Route: /transcribe
+- Free: Whisper transcription, SRT, .txt download
+- Paid: AI summary, key topics, timestamps, PDF export
+- Dependencies needed: openai-whisper, anthropic SDK
+
+### Auth + Payments
+- User accounts before paid features launch
+- Stripe for Pro subscriptions
+- Build order: Deploy → Transcribe free → Auth → Payments → Transcribe paid
+
+### UI Roadmap
+- Navbar auth buttons (Sign In / Join) — placeholder first, real auth later
+- Consider split hero layout on landing page (text left, visual right)

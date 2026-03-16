@@ -91,10 +91,38 @@ audionlabs/
 - Run without --reload flag on Windows to avoid zombie processes
 
 ## Next Session Priorities
-1. Deployment planning (Railway / Render / DigitalOcean)
-2. Custom domain setup (audionlabs.ai)
-3. Rate limiting + file size validation before public launch
-4. User accounts + auth (future)
+1. Deploy to Railway (live URL)
+2. Navbar update — add Transcribe + Sign In + Join AudionLabs buttons across all pages
+3. Build transcribe.html (Coming Soon placeholder)
+4. Build full Transcribe feature (Whisper AI + Claude API)
+5. Auth system (email + password)
+6. Payments/Stripe (Pro tier for AI summary, PDF export)
+
+## PLANNED FEATURES
+
+### Transcribe Tool (/transcribe)
+- Input: Audio file upload OR YouTube URL
+- Free outputs: Full transcript, SRT subtitle file, .txt download
+- Paid outputs (Pro): AI summary, Key topics, Timestamps/chapters, PDF export
+- Tech: openai-whisper (local, free to start) → OpenAI Whisper API (when scaled)
+- AI enhancements: Claude API for summary and key topics
+- Status: NOT STARTED
+
+### Auth System
+- Email + password accounts
+- Free tier vs Pro tier
+- JWT tokens
+- Status: NOT STARTED — placeholder Sign In / Join buttons in nav for now
+
+### Payments
+- Stripe integration
+- Pro subscription gates: AI summary, key topics, PDF export, transcription paid features
+- Status: NOT STARTED
+
+### UI Updates Planned
+- Navbar: Add Transcribe nav item + Sign In + Join AudionLabs buttons (all pages)
+- transcribe.html: Coming Soon placeholder page
+- Status: IN PROGRESS
 
 ## Important Notes
 - This replaces both MVAT_stem_webapp and audionlabs-downloader
