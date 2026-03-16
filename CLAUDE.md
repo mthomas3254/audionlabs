@@ -115,8 +115,12 @@ audionlabs/
 1. Confirm audionlabs.ai is live after DNS propagation
 2. Add audionlabs.ai as custom domain in Railway
 3. Test all 4 tools on live production URL
-4. Add persistent file storage (Railway Volumes)
-5. Rate limiting before marketing/sharing
+4. Security hardening:
+   - Rate limiting (max requests per IP per minute)
+   - File size limits (max 100MB enforced in backend)
+   - File type validation (strict MP3/WAV/M4A only)
+   - Cloudflare WAF rules (block bad bots, SQL injection)
+5. Persistent file storage (Railway Volumes)
 6. Auth + Stripe (Pro tier)
 
 ## Deployment
