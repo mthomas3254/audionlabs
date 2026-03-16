@@ -20,10 +20,6 @@ from .config import (
     ensure_dirs,
 )
 from .services.file_manager import create_track_paths, TrackPaths
-from .core.demucs_engine import split_stems
-from .core.slowed_engine import create_slowed_reverb_mix
-from .core.downloader import download_media
-from .core.transcribe_engine import transcribe_audio
 
 ensure_dirs()
 
@@ -106,6 +102,7 @@ async def transcribe_endpoint(
 
     try:
         if youtube_url:
+            from .core.downloader import download_media
             try:
                 audio_path = download_media(youtube_url, "mp3")
             except (ValueError, RuntimeError) as e:
@@ -121,6 +118,7 @@ async def transcribe_endpoint(
                 f.write(content)
             await file.close()
 
+        from .core.transcribe_engine import transcribe_audio
         result = transcribe_audio(audio_path, ANTHROPIC_API_KEY)
         return JSONResponse(result)
 
@@ -170,6 +168,7 @@ async def process_audio(
     stems_paths: Optional[Dict[str, Path]] = None
 
     if split_stems_flag:
+        from .core.demucs_engine import split_stems
         try:
             stems_paths = split_stems(track_paths)
         except Exception as e:
@@ -186,6 +185,7 @@ async def process_audio(
         response["stems"] = stems_urls
 
     if slowed_reverb_flag:
+        from .core.slowed_engine import create_slowed_reverb_mix
         slowed_output_path = track_paths.slowed_dir / "slowed_mix.wav"
         try:
             create_slowed_reverb_mix(track_paths.original_path, slowed_output_path)
@@ -202,6 +202,7 @@ async def process_audio(
 
 @app.post("/download")
 def download(req: DownloadRequest):
+    from .core.downloader import download_media
     try:
         path = download_media(req.url, req.format)
     except ValueError as e:

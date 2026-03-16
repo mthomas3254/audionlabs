@@ -1,5 +1,8 @@
 FROM python:3.11-slim
 
+# Ensure logs appear in Railway in real time
+ENV PYTHONUNBUFFERED=1
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     ffmpeg \
