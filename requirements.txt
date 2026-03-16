@@ -5,8 +5,8 @@ python-multipart
 requests
 aiofiles
 pydub
-torch==2.10.0+cpu
-torchaudio==2.10.0+cpu
+torch==2.5.1+cpu
+torchaudio==2.5.1+cpu
 soundfile
 demucs
 openai-whisper
