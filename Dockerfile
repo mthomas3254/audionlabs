@@ -32,5 +32,5 @@ RUN mkdir -p uploads downloads separated slowed_outputs transcripts
 # Expose port
 EXPOSE 8000
 
-# Start command
-CMD ["python", "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start command — Railway sets $PORT dynamically
+CMD ["sh", "-c", "python -m uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
