@@ -584,4 +584,321 @@
     });
   }
 
+  // ================================================================
+  //  TRANSCRIBE PAGE
+  // ================================================================
+  if (page === "/transcribe") {
+    var tcTabs          = document.querySelectorAll(".tc-tab");
+    var tcPanelUpload   = document.getElementById("tc-panel-upload");
+    var tcPanelYoutube  = document.getElementById("tc-panel-youtube");
+    var tcDropZone      = document.getElementById("tc-drop-zone");
+    var tcFileInput     = document.getElementById("tc-file-input");
+    var tcBrowseBtn     = document.getElementById("tc-browse-btn");
+    var tcUrlInput      = document.getElementById("tc-url-input");
+    var tcFileInfo      = document.getElementById("tc-file-info");
+    var tcFileName      = document.getElementById("tc-file-name");
+    var tcRemoveBtn     = document.getElementById("tc-remove-file-btn");
+    var tcTranscribeBtn = document.getElementById("tc-transcribe-btn");
+
+    var tcInputCard     = document.getElementById("tc-input-card");
+    var tcStatusCard    = document.getElementById("tc-status-card");
+    var tcStatusStage   = document.getElementById("tc-status-stage");
+    var tcStatusText    = document.getElementById("tc-status-text");
+    var tcProgressFill  = document.getElementById("tc-progress-fill");
+    var tcResultsCard   = document.getElementById("tc-results-card");
+    var tcErrorCard     = document.getElementById("tc-error-card");
+    var tcErrorText     = document.getElementById("tc-error-text");
+    var tcErrorRetryBtn = document.getElementById("tc-error-retry-btn");
+    var tcNewBtn        = document.getElementById("tc-new-btn");
+
+    var tcTranscriptEl  = document.getElementById("tc-transcript-text");
+    var tcDlTxt         = document.getElementById("tc-dl-txt");
+    var tcDlSrt         = document.getElementById("tc-dl-srt");
+    var tcSummaryEl     = document.getElementById("tc-summary-text");
+    var tcTopicsEl      = document.getElementById("tc-topics-list");
+    var tcChaptersEl    = document.getElementById("tc-chapters-list");
+    var tcDlPdf         = document.getElementById("tc-dl-pdf");
+
+    var tcSelectedFile  = null;
+    var tcActiveTab     = "upload";
+    var tcProgressTimer = null;
+    var tcResultData    = null;
+
+    function tcShow(el) { el.hidden = false; }
+    function tcHide(el) { el.hidden = true; }
+
+    // --- Tab switching ---
+    tcTabs.forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        tcTabs.forEach(function (t) { t.classList.remove("active"); });
+        tab.classList.add("active");
+        tcActiveTab = tab.dataset.tab;
+
+        if (tcActiveTab === "upload") {
+          tcShow(tcPanelUpload);
+          tcHide(tcPanelYoutube);
+        } else {
+          tcHide(tcPanelUpload);
+          tcShow(tcPanelYoutube);
+        }
+      });
+    });
+
+    // --- File selection ---
+    tcDropZone.addEventListener("click", function () { tcFileInput.click(); });
+
+    tcBrowseBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      tcFileInput.click();
+    });
+
+    tcFileInput.addEventListener("change", function () {
+      if (tcFileInput.files.length > 0) tcSetFile(tcFileInput.files[0]);
+    });
+
+    tcDropZone.addEventListener("dragover", function (e) {
+      e.preventDefault();
+      tcDropZone.classList.add("drag-over");
+    });
+
+    tcDropZone.addEventListener("dragleave", function () {
+      tcDropZone.classList.remove("drag-over");
+    });
+
+    tcDropZone.addEventListener("drop", function (e) {
+      e.preventDefault();
+      tcDropZone.classList.remove("drag-over");
+      if (e.dataTransfer.files.length > 0) tcSetFile(e.dataTransfer.files[0]);
+    });
+
+    function tcSetFile(file) {
+      if (!file) return;
+      var ext = file.name.split(".").pop().toLowerCase();
+      var allowed = ["mp3", "wav", "m4a", "ogg", "flac"];
+      if (allowed.indexOf(ext) === -1) {
+        tcShowError("Unsupported format. Use MP3, WAV, M4A, OGG or FLAC.");
+        return;
+      }
+      tcSelectedFile = file;
+      tcFileName.textContent = file.name;
+      tcShow(tcFileInfo);
+    }
+
+    tcRemoveBtn.addEventListener("click", function () {
+      tcSelectedFile = null;
+      tcFileInput.value = "";
+      tcHide(tcFileInfo);
+    });
+
+    // --- Progress simulation (tuned for Whisper CPU) ---
+    function tcStartProgress() {
+      var stages = [
+        ["Loading model...", 10, 5000],
+        ["Transcribing audio...", 75, 90000],
+        ["Generating AI summary...", 92, 8000],
+        ["Finalizing...", 96, 2000]
+      ];
+
+      var stageIndex = 0;
+      var currentPct = 0;
+
+      function runStage() {
+        if (stageIndex >= stages.length) return;
+
+        var label = stages[stageIndex][0];
+        var targetPct = stages[stageIndex][1];
+        var duration = stages[stageIndex][2];
+        tcStatusStage.textContent = label;
+
+        var startPct = currentPct;
+        var delta = targetPct - startPct;
+        var intervalMs = 120;
+        var steps = Math.max(1, Math.round(duration / intervalMs));
+        var step = 0;
+
+        tcClearProgress();
+        tcProgressTimer = setInterval(function () {
+          step++;
+          var t = step / steps;
+          var eased = 1 - Math.pow(1 - t, 2);
+          currentPct = startPct + delta * eased;
+          tcProgressFill.style.width = Math.min(currentPct, 100) + "%";
+
+          if (step >= steps) {
+            tcClearProgress();
+            stageIndex++;
+            runStage();
+          }
+        }, intervalMs);
+      }
+
+      runStage();
+    }
+
+    function tcClearProgress() {
+      if (tcProgressTimer) {
+        clearInterval(tcProgressTimer);
+        tcProgressTimer = null;
+      }
+    }
+
+    function tcShowError(msg) {
+      tcClearProgress();
+      tcHide(tcStatusCard);
+      tcHide(tcResultsCard);
+      tcErrorText.textContent = msg;
+      tcShow(tcErrorCard);
+    }
+
+    function tcReset() {
+      tcSelectedFile = null;
+      tcResultData = null;
+      tcFileInput.value = "";
+      tcUrlInput.value = "";
+      tcClearProgress();
+      tcProgressFill.style.width = "0%";
+      tcHide(tcFileInfo);
+      tcHide(tcStatusCard);
+      tcHide(tcResultsCard);
+      tcHide(tcErrorCard);
+      tcShow(tcInputCard);
+    }
+
+    // --- Blob download helper ---
+    function tcDownloadBlob(content, filename, mime) {
+      var blob = new Blob([content], { type: mime });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // --- Transcribe ---
+    tcTranscribeBtn.addEventListener("click", async function () {
+      var form = new FormData();
+
+      if (tcActiveTab === "upload") {
+        if (!tcSelectedFile) {
+          tcShowError("Select an audio file first.");
+          return;
+        }
+        form.append("file", tcSelectedFile);
+      } else {
+        var url = tcUrlInput.value.trim();
+        if (!url) {
+          tcShowError("Paste a YouTube URL first.");
+          return;
+        }
+        form.append("youtube_url", url);
+      }
+
+      tcHide(tcInputCard);
+      tcHide(tcErrorCard);
+      tcHide(tcResultsCard);
+      tcProgressFill.style.width = "0%";
+      tcStatusStage.textContent = "Loading model...";
+      tcStatusText.textContent = "This may take a few minutes";
+      tcShow(tcStatusCard);
+      tcStartProgress();
+
+      tcTranscribeBtn.disabled = true;
+
+      try {
+        var res = await fetch("/transcribe", {
+          method: "POST",
+          body: form,
+        });
+
+        if (!res.ok) {
+          var body = await res.json().catch(function () { return {}; });
+          throw new Error(body.detail || "Server error (" + res.status + ")");
+        }
+
+        var data = await res.json();
+        tcResultData = data;
+
+        tcClearProgress();
+        tcStatusStage.textContent = "Done!";
+        tcProgressFill.style.width = "100%";
+
+        setTimeout(function () { tcRenderResults(data); }, 400);
+      } catch (err) {
+        tcShowError(err.message || "Something went wrong. Please try again.");
+      } finally {
+        tcTranscribeBtn.disabled = false;
+      }
+    });
+
+    // --- Enter key on URL input ---
+    tcUrlInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") tcTranscribeBtn.click();
+    });
+
+    // --- Render results ---
+    function tcRenderResults(data) {
+      tcHide(tcStatusCard);
+
+      // Transcript
+      tcTranscriptEl.textContent = data.transcript || "(No transcript available)";
+
+      // Summary
+      tcSummaryEl.textContent = data.summary || "No summary available.";
+
+      // Topics
+      tcTopicsEl.innerHTML = "";
+      var topics = data.topics || [];
+      if (topics.length === 0) {
+        tcTopicsEl.innerHTML = '<span class="tc-topic-pill">No topics detected</span>';
+      } else {
+        topics.forEach(function (topic) {
+          var pill = document.createElement("span");
+          pill.className = "tc-topic-pill";
+          pill.textContent = topic;
+          tcTopicsEl.appendChild(pill);
+        });
+      }
+
+      // Chapters
+      tcChaptersEl.innerHTML = "";
+      var chapters = data.chapters || [];
+      if (chapters.length === 0) {
+        tcChaptersEl.innerHTML = '<div class="tc-chapter"><span class="tc-chapter-label">No chapters detected</span></div>';
+      } else {
+        chapters.forEach(function (ch) {
+          var row = document.createElement("div");
+          row.className = "tc-chapter";
+          row.innerHTML =
+            '<span class="tc-chapter-time">' + ch.time + '</span>' +
+            '<span class="tc-chapter-label">' + ch.label + '</span>';
+          tcChaptersEl.appendChild(row);
+        });
+      }
+
+      tcShow(tcResultsCard);
+    }
+
+    // --- Download buttons ---
+    tcDlTxt.addEventListener("click", function () {
+      if (!tcResultData) return;
+      tcDownloadBlob(tcResultData.transcript, "transcript.txt", "text/plain");
+    });
+
+    tcDlSrt.addEventListener("click", function () {
+      if (!tcResultData) return;
+      tcDownloadBlob(tcResultData.srt, "transcript.srt", "text/plain");
+    });
+
+    tcDlPdf.addEventListener("click", function () {
+      alert("Pro feature \u2014 coming soon!");
+    });
+
+    // --- Reset ---
+    tcNewBtn.addEventListener("click", tcReset);
+    tcErrorRetryBtn.addEventListener("click", tcReset);
+  }
+
 })();

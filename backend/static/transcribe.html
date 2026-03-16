@@ -45,34 +45,122 @@
 
 <main>
 
-  <!-- Coming Soon card -->
-  <div class="card coming-soon-card">
-    <div class="coming-soon-icon">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-        <line x1="12" y1="19" x2="12" y2="23"/>
-        <line x1="8" y1="23" x2="16" y2="23"/>
+  <!-- Input card -->
+  <div class="card" id="tc-input-card">
+    <!-- Tab bar -->
+    <div class="tc-tabs">
+      <button class="tc-tab active" data-tab="upload">Upload File</button>
+      <button class="tc-tab" data-tab="youtube">YouTube URL</button>
+    </div>
+
+    <!-- Upload panel -->
+    <div class="tc-panel" id="tc-panel-upload">
+      <div id="tc-drop-zone">
+        <div class="drop-zone-content">
+          <div class="upload-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+            </svg>
+          </div>
+          <p class="drop-text">Drop your audio file here</p>
+          <p class="drop-subtext">or</p>
+          <button id="tc-browse-btn" type="button">Browse Files</button>
+          <p class="file-hint">MP3, WAV, M4A, OGG or FLAC</p>
+        </div>
+        <input type="file" id="tc-file-input" accept=".mp3,.wav,.m4a,.ogg,.flac" hidden>
+      </div>
+    </div>
+
+    <!-- YouTube panel -->
+    <div class="tc-panel" id="tc-panel-youtube" hidden>
+      <input
+        id="tc-url-input"
+        type="url"
+        placeholder="https://youtube.com/watch?v=..."
+        autocomplete="off"
+        spellcheck="false"
+      />
+    </div>
+
+    <!-- File info bar -->
+    <div id="tc-file-info" hidden>
+      <div class="file-info-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+        </svg>
+      </div>
+      <span id="tc-file-name"></span>
+      <button id="tc-remove-file-btn" type="button" aria-label="Remove file">&times;</button>
+    </div>
+
+    <!-- Transcribe button -->
+    <button id="tc-transcribe-btn" type="button">Transcribe</button>
+  </div>
+
+  <!-- Status card -->
+  <div class="card" id="tc-status-card" hidden>
+    <p id="tc-status-stage">Loading model...</p>
+    <div id="tc-progress-track">
+      <div id="tc-progress-fill"></div>
+    </div>
+    <p id="tc-status-text">This may take a few minutes</p>
+  </div>
+
+  <!-- Results card -->
+  <div class="card" id="tc-results-card" hidden>
+    <div class="results-header">
+      <div class="results-check">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <h2>Transcription Complete</h2>
+    </div>
+
+    <!-- FREE: Transcript -->
+    <div class="tc-section">
+      <p class="result-group-label">Transcript</p>
+      <div class="tc-transcript" id="tc-transcript-text"></div>
+      <div class="tc-download-row">
+        <button class="tc-dl-btn" id="tc-dl-txt" type="button">Download .txt</button>
+        <button class="tc-dl-btn" id="tc-dl-srt" type="button">Download .srt</button>
+      </div>
+    </div>
+
+    <!-- PRO: AI Summary -->
+    <div class="tc-pro-section">
+      <div class="tc-pro-header">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <span class="tc-pro-badge">Pro</span>
+      </div>
+
+      <p class="result-group-label">AI Summary</p>
+      <div class="tc-summary" id="tc-summary-text"></div>
+
+      <p class="result-group-label">Key Topics</p>
+      <div class="tc-topics" id="tc-topics-list"></div>
+
+      <p class="result-group-label">Chapters</p>
+      <div class="tc-chapters" id="tc-chapters-list"></div>
+
+      <button class="tc-dl-btn tc-dl-pdf" id="tc-dl-pdf" type="button">Download PDF</button>
+    </div>
+
+    <button id="tc-new-btn" type="button">Transcribe Another</button>
+  </div>
+
+  <!-- Error card -->
+  <div class="card" id="tc-error-card" hidden>
+    <div class="error-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
     </div>
-    <h2 class="coming-soon-heading">Coming Soon</h2>
-    <p class="coming-soon-text">Upload any audio or paste a YouTube URL to get a full transcript, AI summary, key topics, and SRT subtitle file.</p>
-
-    <div class="feature-pills">
-      <div class="feature-pill feature-pill-free">
-        <span class="feature-pill-label">Free</span>
-        <span class="feature-pill-items">Full Transcript &middot; SRT Download &middot; .txt Export</span>
-      </div>
-      <div class="feature-pill feature-pill-pro">
-        <span class="feature-pill-label">Pro</span>
-        <span class="feature-pill-items">AI Summary &middot; Key Topics &middot; Timestamps &middot; PDF Export</span>
-      </div>
-    </div>
-
-    <div class="notify-form">
-      <input type="email" class="notify-input" placeholder="Enter your email" autocomplete="email" spellcheck="false">
-      <button class="notify-btn" type="button">Notify Me</button>
-    </div>
+    <p id="tc-error-text"></p>
+    <button id="tc-error-retry-btn" type="button">Try Again</button>
   </div>
 
 </main>
@@ -85,19 +173,6 @@
 
 <footer>&copy; 2026 AudionLabs</footer>
 
-<script>
-  (function () {
-    var active = document.querySelector(".nav-item.active");
-    var indicator = document.querySelector(".nav-indicator");
-    function position() {
-      if (!active || !indicator) return;
-      indicator.style.width = active.offsetWidth + "px";
-      indicator.style.left = active.offsetLeft + "px";
-    }
-    position();
-    window.addEventListener("resize", position);
-  })();
-</script>
-
+<script src="/static/app.js"></script>
 </body>
 </html>
