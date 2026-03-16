@@ -251,6 +251,23 @@ calls. One port, one codebase.
   `transcribe_endpoint` to avoid shadowing GET route function
 - All endpoints verified returning 200, POST validation working
 
+**Session 2 (March 16, continued):**
+- Railway deployment complete
+- Dockerfile with Python 3.11-slim, FFmpeg via apt-get, Whisper small
+  model pre-downloaded during build (~462MB baked into image)
+- sitecustomize.py patch baked into Docker image as backup
+- torch 2.5.1+cpu / torchaudio 2.5.1+cpu for Python 3.11 compatibility
+- Lazy-loaded heavy imports (torch, demucs, whisper) — FastAPI starts
+  instantly and passes healthcheck without loading ML models
+- Cloudflare DNS configured for audionlabs.ai (CNAME → Railway)
+- Known deployment issues encountered and fixed:
+  - PORT variable expansion in railway.toml (fixed: removed startCommand,
+    hardcoded port 8000 in Dockerfile CMD)
+  - Heavy imports at startup caused OOM on 512MB Railway starter plan
+    (fixed: lazy loading in endpoint functions)
+  - torchcodec bug not an issue on Railway — Python 3.11 + torch 2.5.1
+    avoids it, sitecustomize.py included as backup
+
 ---
 
 ## All Errors Encountered & Fixes Applied

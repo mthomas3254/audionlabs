@@ -95,6 +95,8 @@ audionlabs/
 - Transcribe backend (Whisper + Claude API) -- DONE
 - Transcribe end-to-end test -- DONE (working)
 - Navbar update (Transcribe + Sign In + Join) -- DONE
+- Railway deployment -- DONE
+- Custom domain setup -- IN PROGRESS (DNS propagating)
 
 ## Known Issues
 - torch/torchaudio pinned to 2.10.0+cpu (Python 3.14)
@@ -103,14 +105,27 @@ audionlabs/
 - Whisper small model downloads ~462MB on first run
 - Whisper CPU processing takes 1-2 mins per track
 - Pro PDF export is placeholder (alert only) — needs real implementation
+- Files uploaded to Railway are ephemeral — deleted on
+  every redeploy. Need persistent storage (Railway
+  Volumes or S3) before heavy production use.
+- Whisper model is baked into Docker image — re-downloaded
+  on every new build if cache is cleared
 
 ## Next Session Priorities
-1. Deploy to Railway (live URL)
-2. Custom domain (audionlabs.ai)
-3. File cleanup — auto-delete uploads/transcripts after processing
-4. Rate limiting before public launch
-5. Auth system (Sign In / Join AudionLabs — currently placeholders)
-6. Stripe payments (Pro tier — AI summary, PDF export)
+1. Confirm audionlabs.ai is live after DNS propagation
+2. Add audionlabs.ai as custom domain in Railway
+3. Test all 4 tools on live production URL
+4. Add persistent file storage (Railway Volumes)
+5. Rate limiting before marketing/sharing
+6. Auth + Stripe (Pro tier)
+
+## Deployment
+- Platform: Railway
+- Live URL: audionlabs-production.up.railway.app
+- Custom domain: audionlabs.ai (DNS propagating)
+- Region: asia-southeast1
+- Port: 8000
+- Auto-deploys on every git push to master
 
 ## PLANNED FEATURES
 
