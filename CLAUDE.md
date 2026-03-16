@@ -8,9 +8,10 @@ Malik Thomas
 
 ## What This Does
 AudionLabs is a professional audio processing suite for
-YouTube creators, DJs, and remix artists. Three tools in
-one platform: stem splitting, slowed+reverb, and YouTube
-downloading. Each tool has its own SEO-optimized page.
+YouTube creators, DJs, and remix artists. Four tools in
+one platform: stem splitting, slowed+reverb, YouTube
+downloading, and AI transcription. Each tool has its own
+SEO-optimized page.
 
 ## Target Users
 YouTube creators, TikTok creators, DJs, remix artists, producers
@@ -23,17 +24,21 @@ YouTube creators, TikTok creators, DJs, remix artists, producers
 - FFmpeg + ffprobe (system-wide install required)
 - yt-dlp (YouTube downloading)
 - Pydub (audio utility)
+- openai-whisper (transcription — small model)
+- anthropic SDK (Claude API — summary + key topics)
 - HTML + CSS + JS frontend (multi-page)
 
 ## Pages
-- / → index.html (landing page — all three tools)
+- / → index.html (landing page — all four tools)
 - /stems → stems.html (stem splitter tool)
 - /slowed-reverb → slowed-reverb.html (slowed+reverb tool)
 - /youtube-downloader → youtube-downloader.html (YT downloader)
+- /transcribe → transcribe.html (AI transcription tool)
 
 ## API Endpoints
 - POST /process_audio → stem split + slowed+reverb
 - POST /download → YouTube MP3/MP4 download
+- POST /transcribe → Whisper transcription + Claude AI summary
 - GET /file?path= → serve downloaded file
 - GET /health → status check
 
@@ -47,7 +52,8 @@ audionlabs/
 │       ├── __init__.py
 │       ├── demucs_engine.py
 │       ├── slowed_engine.py
-│       └── downloader.py
+│       ├── downloader.py
+│       └── transcribe_engine.py
 │   └── services/
 │       ├── __init__.py
 │       └── file_manager.py
@@ -56,6 +62,7 @@ audionlabs/
 │   ├── stems.html
 │   ├── slowed-reverb.html
 │   ├── youtube-downloader.html
+│   ├── transcribe.html
 │   ├── style.css
 │   └── app.js
 ├── uploads/
@@ -84,19 +91,26 @@ audionlabs/
 - YouTube → AudionLabs pipeline test -- DONE (working)
 - All three tools fully tested end-to-end -- DONE
 - Progress bar on YouTube downloader processing -- DONE
+- Transcribe page frontend -- DONE
+- Transcribe backend (Whisper + Claude API) -- DONE
+- Transcribe end-to-end test -- DONE (working)
+- Navbar update (Transcribe + Sign In + Join) -- DONE
 
 ## Known Issues
 - torch/torchaudio pinned to 2.10.0+cpu (Python 3.14)
 - FFmpeg must be installed system-wide (static build — no shared DLLs)
 - Run without --reload flag on Windows to avoid zombie processes
+- Whisper small model downloads ~462MB on first run
+- Whisper CPU processing takes 1-2 mins per track
+- Pro PDF export is placeholder (alert only) — needs real implementation
 
 ## Next Session Priorities
 1. Deploy to Railway (live URL)
-2. Navbar update — add Transcribe + Sign In + Join AudionLabs buttons across all pages
-3. Build transcribe.html (Coming Soon placeholder)
-4. Build full Transcribe feature (Whisper AI + Claude API)
-5. Auth system (email + password)
-6. Payments/Stripe (Pro tier for AI summary, PDF export)
+2. Custom domain (audionlabs.ai)
+3. File cleanup — auto-delete uploads/transcripts after processing
+4. Rate limiting before public launch
+5. Auth system (Sign In / Join AudionLabs — currently placeholders)
+6. Stripe payments (Pro tier — AI summary, PDF export)
 
 ## PLANNED FEATURES
 
@@ -104,15 +118,14 @@ audionlabs/
 - Input: Audio file upload OR YouTube URL
 - Free outputs: Full transcript, SRT subtitle file, .txt download
 - Paid outputs (Pro): AI summary, Key topics, Timestamps/chapters, PDF export
-- Tech: openai-whisper (local, free to start) → OpenAI Whisper API (when scaled)
-- AI enhancements: Claude API for summary and key topics
-- Status: NOT STARTED
+- Tech: openai-whisper (local) + Claude API (summary/topics)
+- Status: DONE (free + pro UI built, PDF gating is placeholder)
 
 ### Auth System
 - Email + password accounts
 - Free tier vs Pro tier
 - JWT tokens
-- Status: NOT STARTED — placeholder Sign In / Join buttons in nav for now
+- Status: NOT STARTED — placeholder Sign In / Join buttons in nav
 
 ### Payments
 - Stripe integration
@@ -121,8 +134,8 @@ audionlabs/
 
 ### UI Updates Planned
 - Navbar: Add Transcribe nav item + Sign In + Join AudionLabs buttons (all pages)
-- transcribe.html: Coming Soon placeholder page
-- Status: IN PROGRESS
+- transcribe.html: Full working UI with tab input, progress, results
+- Status: DONE
 
 ## Important Notes
 - This replaces both MVAT_stem_webapp and audionlabs-downloader

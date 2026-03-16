@@ -40,6 +40,7 @@ via subprocess calls to external tools.
 |--------|------|---------|
 | POST | `/process_audio` | Stem split and/or slowed+reverb processing |
 | POST | `/download` | YouTube MP3/MP4 download via yt-dlp |
+| POST | `/transcribe` | Whisper transcription + Claude AI summary |
 | GET | `/file?path=` | Serve downloaded files from the downloads directory |
 | GET | `/health` | Status check (returns demucs model name) |
 
@@ -66,7 +67,7 @@ via subprocess calls to external tools.
 HTML + CSS + vanilla JavaScript (no framework)
 ```
 
-Four pages served as static files by FastAPI:
+Five pages served as static files by FastAPI:
 
 | Route | File | Purpose |
 |-------|------|---------|
@@ -74,6 +75,7 @@ Four pages served as static files by FastAPI:
 | `/stems` | `stems.html` | Stem splitter upload + processing |
 | `/slowed-reverb` | `slowed-reverb.html` | Slowed+reverb upload + processing |
 | `/youtube-downloader` | `youtube-downloader.html` | YouTube download + AudionLabs pipeline |
+| `/transcribe` | `transcribe.html` | AI transcription (Whisper + Claude) |
 
 **UI Features:**
 - Tubelight floating navbar with animated indicator
@@ -99,7 +101,8 @@ audionlabs/
 │   │   ├── __init__.py
 │   │   ├── demucs_engine.py     # Stem separation (Demucs CLI wrapper)
 │   │   ├── slowed_engine.py     # Slowed + reverb (FFmpeg)
-│   │   └── downloader.py        # YouTube download (yt-dlp)
+│   │   ├── downloader.py        # YouTube download (yt-dlp)
+│   │   └── transcribe_engine.py # Whisper transcription + Claude API
 │   └── services/
 │       ├── __init__.py
 │       └── file_manager.py      # TrackPaths dataclass, UUID track IDs
@@ -108,12 +111,14 @@ audionlabs/
 │   ├── stems.html               # Stem splitter page
 │   ├── slowed-reverb.html       # Slowed+reverb page
 │   ├── youtube-downloader.html  # YouTube downloader page
+│   ├── transcribe.html          # AI transcription page
 │   ├── style.css                # All styles (single file)
 │   └── app.js                   # All frontend logic (single file)
 ├── uploads/                     # Runtime: uploaded audio files
 ├── downloads/                   # Runtime: YouTube downloads
 ├── separated/                   # Runtime: Demucs stem output
 ├── slowed_outputs/              # Runtime: slowed+reverb output
+├── transcripts/                 # Runtime: transcription temp files
 ├── sitecustomize_backup.py      # Backup of torchaudio monkey-patch
 ├── requirements.txt
 ├── .env.example
@@ -223,6 +228,28 @@ calls. One port, one codebase.
   on the YouTube downloader page (matching existing download progress bar)
 - All three tools confirmed fully functional
 - CLAUDE.md updated: all tests passing, deployment planning is next
+
+### Phase 4: Transcription Feature (March 16, 2026)
+
+**Session 1 (March 16):**
+- Planned features session save: transcribe, auth, payments, navbar update
+- Navbar updated across all 5 pages: added Transcribe link + Sign In / Join
+  AudionLabs auth buttons (placeholder)
+- Transcribe tool card added to landing page (4-column grid)
+- Created `transcribe_engine.py` — Whisper small model + Claude API
+  (summary + key topics via claude-sonnet-4-20250514)
+- Built SRT generator from Whisper segments, chapter grouping (~60s intervals)
+- Added `POST /transcribe` endpoint — accepts file upload or YouTube URL
+- Updated `config.py` with `TRANSCRIPTS_DIR` and `ANTHROPIC_API_KEY`
+- Added `openai-whisper` and `anthropic` to requirements.txt
+- Built full transcribe.html frontend: tab switcher (Upload File / YouTube URL),
+  drag-drop zone, progress bar with Whisper-tuned stages, results section
+  with scrollable transcript, .txt/.srt blob downloads
+- Pro section: AI summary card, key topic pills, chapter timestamps,
+  PDF download button (placeholder — shows "coming soon" alert)
+- Fixed route conflict: renamed POST handler from `transcribe` to
+  `transcribe_endpoint` to avoid shadowing GET route function
+- All endpoints verified returning 200, POST validation working
 
 ---
 
@@ -369,6 +396,15 @@ environments. Do not delete this section.
   4. Verify `demucs_engine.py` and `downloader.py` use VENV_PYTHON not sys.executable
   5. Test with: `.venv/Scripts/python.exe -c "import torchaudio, torch, demucs; print('OK')"`
 - **Status:** DOCUMENTED — follow checklist on new environment setup
+
+### Bug 4: sitecustomize.py must be copied to new venv
+- **Symptom:** torchaudio.save fails with torchcodec error on any new venv
+- **Root cause:** The monkey-patch lives in `.venv/Lib/site-packages/sitecustomize.py`
+  which is not tracked by pip or requirements.txt
+- **Fix:** Always copy `sitecustomize_backup.py` (project root) into the new venv's
+  `Lib/site-packages/sitecustomize.py`. Required for torchaudio save on Windows
+  with static FFmpeg builds.
+- **Status:** DOCUMENTED — included in environment setup checklist
 
 ---
 
@@ -551,13 +587,14 @@ uvicorn processes that hold the port open.
 
 ---
 
-## PHASE 4 — PLANNED (Not Yet Built)
+## PHASE 4 — PLANNED
 
-### Transcribe Feature
+### Transcribe Feature — DONE
 - Route: /transcribe
-- Free: Whisper transcription, SRT, .txt download
-- Paid: AI summary, key topics, timestamps, PDF export
-- Dependencies needed: openai-whisper, anthropic SDK
+- Free: Whisper transcription, SRT, .txt download — WORKING
+- Paid: AI summary, key topics, timestamps — WORKING (shown to all users for now)
+- PDF export — PLACEHOLDER (alert only, needs real implementation)
+- Dependencies: openai-whisper, anthropic SDK — installed
 
 ### Auth + Payments
 - User accounts before paid features launch
