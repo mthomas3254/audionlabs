@@ -9,4 +9,6 @@ torch==2.10.0+cpu
 torchaudio==2.10.0+cpu
 soundfile
 demucs
+openai-whisper
+anthropic
 --extra-index-url https://download.pytorch.org/whl/cpu

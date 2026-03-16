@@ -1,3 +1,4 @@
+import uuid
 from pathlib import Path
 from typing import Optional, Dict
 
@@ -12,7 +13,9 @@ from .config import (
     DOWNLOADS_DIR,
     SEPARATED_DIR,
     SLOWED_DIR,
+    TRANSCRIPTS_DIR,
     DEMUCS_MODEL,
+    ANTHROPIC_API_KEY,
     PORT,
     ensure_dirs,
 )
@@ -20,6 +23,7 @@ from .services.file_manager import create_track_paths, TrackPaths
 from .core.demucs_engine import split_stems
 from .core.slowed_engine import create_slowed_reverb_mix
 from .core.downloader import download_media
+from .core.transcribe_engine import transcribe_audio
 
 ensure_dirs()
 
@@ -87,6 +91,42 @@ async def transcribe_page():
 
 
 # --- API routes ---
+
+
+@app.post("/transcribe")
+async def transcribe_endpoint(
+    file: UploadFile = File(None),
+    youtube_url: str = Form(None),
+):
+    if not file and not youtube_url:
+        raise HTTPException(status_code=400, detail="Provide either a file or a YouTube URL.")
+
+    audio_path: Optional[Path] = None
+    cleanup = False
+
+    try:
+        if youtube_url:
+            try:
+                audio_path = download_media(youtube_url, "mp3")
+            except (ValueError, RuntimeError) as e:
+                raise HTTPException(status_code=400, detail=str(e))
+        else:
+            ext = Path(file.filename or "audio.mp3").suffix.lower()
+            if ext not in (".mp3", ".wav", ".m4a", ".ogg", ".flac"):
+                raise HTTPException(status_code=400, detail="Unsupported audio format.")
+            audio_path = TRANSCRIPTS_DIR / f"{uuid.uuid4()}{ext}"
+            cleanup = True
+            with audio_path.open("wb") as f:
+                content = await file.read()
+                f.write(content)
+            await file.close()
+
+        result = transcribe_audio(audio_path, ANTHROPIC_API_KEY)
+        return JSONResponse(result)
+
+    finally:
+        if cleanup and audio_path and audio_path.exists():
+            audio_path.unlink(missing_ok=True)
 
 @app.get("/health")
 async def health():
