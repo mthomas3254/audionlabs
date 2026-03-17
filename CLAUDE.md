@@ -96,7 +96,9 @@ audionlabs/
 - Transcribe end-to-end test -- DONE (working)
 - Navbar update (Transcribe + Sign In + Join) -- DONE
 - Railway deployment -- DONE
-- Custom domain setup -- IN PROGRESS (DNS propagating)
+- Custom domain (audionlabs.ai) -- DONE
+- Cloudflare DNS + SSL -- DONE
+- Production deployment -- COMPLETE
 
 ## Known Issues
 - torch/torchaudio pinned to 2.10.0+cpu (Python 3.14)
@@ -123,10 +125,15 @@ audionlabs/
 5. Persistent file storage (Railway Volumes)
 6. Auth + Stripe (Pro tier)
 
+## LIVE PRODUCTION
+- URL: https://audionlabs.ai
+- Railway: audionlabs-production.up.railway.app
+- Status: LIVE
+
 ## Deployment
 - Platform: Railway
-- Live URL: audionlabs-production.up.railway.app
-- Custom domain: audionlabs.ai (DNS propagating)
+- Live URL: https://audionlabs.ai
+- Railway URL: audionlabs-production.up.railway.app
 - Region: asia-southeast1
 - Port: 8000
 - Auto-deploys on every git push to master
