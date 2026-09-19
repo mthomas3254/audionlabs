@@ -9,17 +9,23 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js 20 LTS (required for bgutil POT script)
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+# Node.js 22 LTS. yt-dlp needs a JavaScript runtime to solve YouTube's challenges, and
+# both yt-dlp and the bgutil PO token script require Node >= 22. Node 20 silently
+# disabled both, which was the real cause of Bug 14. Fail the build if this regresses.
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && node -e "process.exit(+process.versions.node.split('.')[0] >= 22 ? 0 : 1)"
 
-# Build bgutil POT generation script (default path: ~/bgutil-ytdlp-pot-provider/)
+# bgutil PO token generation script (default path: ~/bgutil-ytdlp-pot-provider/).
+# BGUTIL_VERSION must match the pip plugin version installed below.
+ARG BGUTIL_VERSION=2.0.0
 RUN cd /root \
-    && git clone --single-branch --branch 1.2.2 https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git \
+    && git clone --single-branch --branch ${BGUTIL_VERSION} https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git \
     && cd bgutil-ytdlp-pot-provider/server \
-    && npm install \
-    && npx tsc
+    && npm ci --no-audit --no-fund \
+    && npx tsc \
+    && test -f build/generate_once.js
 
 WORKDIR /app
 
@@ -28,9 +34,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir soundfile
 
-# Upgrade yt-dlp to latest + install POT provider plugin (Bug 14 fix)
-RUN pip install --no-cache-dir -U yt-dlp
-RUN pip install --no-cache-dir bgutil-ytdlp-pot-provider
+# Latest yt-dlp with its "default" group, which includes yt-dlp-ejs, the challenge
+# solver scripts the JS runtime runs. The plugin version matches BGUTIL_VERSION above.
+RUN pip install --no-cache-dir -U "yt-dlp[default]"
+RUN pip install --no-cache-dir "bgutil-ytdlp-pot-provider==${BGUTIL_VERSION}"
 
 RUN python -c "import whisper; whisper.load_model('small')"
 

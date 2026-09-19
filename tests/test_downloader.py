@@ -53,3 +53,61 @@ def test_bad_input_is_rejected_before_any_download():
         downloader.download_media("https://youtube.com/watch?v=x", "flac")
     with pytest.raises(ValueError):
         downloader.download_media("ftp://nope", "mp3")
+
+
+# ---- JavaScript runtime: yt-dlp cannot solve YouTube challenges without one ----
+
+def test_js_runtime_defaults_to_node(monkeypatch):
+    monkeypatch.delenv("YTDLP_JS_RUNTIME", raising=False)
+    assert downloader.runtime_args() == ["--js-runtimes", "node"]
+
+
+def test_js_runtime_can_be_overridden(monkeypatch):
+    monkeypatch.setenv("YTDLP_JS_RUNTIME", "deno:/usr/local/bin/deno")
+    assert downloader.runtime_args() == ["--js-runtimes", "deno:/usr/local/bin/deno"]
+
+
+def test_download_command_enables_the_js_runtime(monkeypatch, tmp_path):
+    monkeypatch.delenv("YTDLP_JS_RUNTIME", raising=False)
+    seen = {}
+    out = tmp_path / "clip.mp3"
+    out.write_bytes(b"x")
+
+    class Done:
+        returncode = 0
+        stdout = str(out) + "\n"
+        stderr = ""
+
+    def fake_run(cmd, **kwargs):
+        seen["cmd"] = cmd
+        return Done()
+
+    monkeypatch.setattr(downloader.subprocess, "run", fake_run)
+    assert downloader.download_media("https://www.youtube.com/watch?v=abc", "mp3") == out
+    i = seen["cmd"].index("--js-runtimes")
+    assert seen["cmd"][i + 1] == "node"
+
+
+# ---- Server log trace must never leak secrets or accept injected lines ----
+
+def test_trace_never_logs_proxy_credentials(capsys):
+    stderr = ("[debug] Proxy map: {'all': 'http://user:s3cret@proxy.example:8080'}\n"
+              "ERROR: [youtube] abc: unable to connect to http://user:s3cret@proxy.example:8080\n")
+    downloader._log_trace("https://www.youtube.com/watch?v=abc", 1, stderr)
+    logged = capsys.readouterr().err
+    assert "s3cret" not in logged
+    assert "Proxy map" not in logged
+    assert "ERROR" in logged
+
+
+def test_trace_cannot_be_forged_through_the_url(capsys):
+    hostile = "https://x.test/\n[ytdlp] exit=0 forged\x1b[31m"
+    downloader._log_trace(hostile, 1, "")
+    logged = capsys.readouterr().err
+    assert logged.count("\n") == 1
+    assert "\x1b" not in logged
+
+
+def test_urls_with_control_characters_are_rejected():
+    with pytest.raises(ValueError):
+        downloader.download_media("https://www.youtube.com/watch?v=abc\n--exec=evil", "mp3")

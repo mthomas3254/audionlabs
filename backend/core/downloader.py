@@ -13,14 +13,13 @@ PYTHON = str(VENV_PYTHON) if VENV_PYTHON.exists() else sys.executable
 
 
 def network_args() -> List[str]:
-    """Extra yt-dlp arguments taken from the environment.
+    """Optional yt-dlp network arguments taken from the environment.
 
-    YouTube blocks most datacenter IP addresses with a "confirm you're not a bot"
-    wall. PO tokens do not lift that block. A residential proxy does, so the proxy
-    is configurable without a code change:
+    A last resort if YouTube still shows its "confirm you're not a bot" wall even
+    with a working JavaScript runtime and PO token provider (see runtime_args):
 
         YTDLP_PROXY          for example http://user:pass@host:port
-        YTDLP_COOKIES_FILE   path to a Netscape cookies.txt, as a fallback
+        YTDLP_COOKIES_FILE   path to a Netscape cookies.txt
     """
     args: List[str] = []
     proxy = os.getenv("YTDLP_PROXY", "").strip()
@@ -32,20 +31,45 @@ def network_args() -> List[str]:
     return args
 
 
+def runtime_args() -> List[str]:
+    """Tell yt-dlp which JavaScript runtime to use.
+
+    YouTube extraction needs a JS runtime to solve its challenges. Without one,
+    yt-dlp falls back to a single degraded client that YouTube answers with the
+    bot wall for many videos. That was the real cause of Bug 14. yt-dlp enables
+    only Deno by default, and the Docker image ships Node 22, so Node is named
+    here. Override with YTDLP_JS_RUNTIME, for example "deno:/usr/local/bin/deno".
+    """
+    runtime = os.getenv("YTDLP_JS_RUNTIME", "").strip() or "node"
+    return ["--js-runtimes", runtime]
+
+
+# Lines of the verbose trace worth keeping. "Proxy map" is deliberately absent,
+# because yt-dlp prints the proxy URL there, credentials included.
 _TRACE_RE = re.compile(
     r"yt-dlp version|Python |exe versions|JS runtime|JavaScript|Optional libraries|Plugin|"
-    r"\[pot|\[youtube\]|\[jsc|client|WARNING|ERROR|Proxy map|Request Handlers", re.I)
+    r"\[pot|\[youtube\]|\[jsc|client|WARNING|ERROR|Request Handlers", re.I)
+_CREDENTIALS_RE = re.compile(r"://[^/\s@]+@")
+_UNPRINTABLE_RE = re.compile(r"[^\x20-\x7e]")
+
+
+def _scrub(text: str) -> str:
+    """Remove URL credentials and anything that could forge or corrupt a log line."""
+    text = _CREDENTIALS_RE.sub("://<redacted>@", text)
+    return _UNPRINTABLE_RE.sub("?", text)
 
 
 def _log_trace(url: str, returncode: int, stderr: str) -> None:
     """Write the informative lines of yt-dlp's verbose output to the server log.
 
     Visitors see friendly_error(). This keeps the real cause readable in Railway logs.
+    Every line is scrubbed, since both the URL and yt-dlp's output are untrusted.
     """
-    lines = [ln for ln in (stderr or "").splitlines() if _TRACE_RE.search(ln)]
-    print(f"[ytdlp] exit={returncode} url={url}", file=sys.stderr, flush=True)
+    lines = [ln for ln in (stderr or "").splitlines()
+             if _TRACE_RE.search(ln) and "proxy map" not in ln.lower()]
+    print(f"[ytdlp] exit={returncode} url={_scrub(url)[:300]}", file=sys.stderr, flush=True)
     for ln in lines[-80:]:
-        print(f"[ytdlp] {ln[:400]}", file=sys.stderr, flush=True)
+        print(f"[ytdlp] {_scrub(ln)[:400]}", file=sys.stderr, flush=True)
 
 
 def friendly_error(stderr: str) -> str:
@@ -77,11 +101,15 @@ def download_media(url: str, format: str) -> Path:
     if not url or not url.startswith(("http://", "https://")):
         raise ValueError("Invalid URL — must start with http:// or https://")
 
+    if len(url) > 2000 or _UNPRINTABLE_RE.search(url) or " " in url:
+        raise ValueError("Invalid URL — it contains characters a link cannot have")
+
     output_template = str(DOWNLOADS_DIR / "%(title)s.%(ext)s")
 
     # --verbose only adds detail to stderr, which is logged below. It does not change behavior.
     cmd = [PYTHON, "-m", "yt_dlp", "--no-playlist", "--restrict-filenames", "--verbose",
            "--print", "after_move:filepath"]
+    cmd += runtime_args()
     cmd += network_args()
 
     if format == "mp3":
