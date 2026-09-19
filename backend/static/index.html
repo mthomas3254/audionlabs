@@ -2,131 +2,118 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AudionLabs — Professional Audio Tools for Creators</title>
-  <meta name="description" content="Split stems, create slowed+reverb versions, and download YouTube audio with AudionLabs AI audio tools.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>AudionLabs — Live Audio Tools for Creators</title>
+  <meta name="description" content="Split any song into stems and mix them live, make slowed + reverb edits in real time, and transcribe audio. Free, in your browser, no installs.">
+  <link rel="canonical" href="https://audionlabs.ai/">
+<!-- HEAD_COMMON -->
+<!-- ADSENSE_HEAD -->
 </head>
 <body>
+<!-- SPRITE -->
+<!-- NAV -->
 
-<!-- Aurora -->
-<div class="aurora">
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
-  <div class="blob blob-3"></div>
-</div>
+<main>
+  <div class="wrap">
+    <section class="hero">
+      <span class="eyebrow">Live audio tools</span>
+      <h1>Hear every change.<br><em>As you make it.</em></h1>
+      <p class="lede">Split a song into stems and mix them live. Slow it down and add reverb in real time. Transcribe anything. No installs, no account.</p>
+      <div class="cta-row">
+        <a class="btn btn-ink" href="/slowed-reverb">Open the live studio</a>
+        <a class="btn btn-ghost" href="/stems">Split a track</a>
+      </div>
+      <div class="stage" aria-hidden="true">
+        <div class="stage-top">
+          <div class="track">
+            <div class="art"><svg class="i"><use href="#i-note"/></svg></div>
+            <div><b>your-track.mp3</b><small>Split into 4 stems, ready to mix</small></div>
+          </div>
+          <span class="btn btn-white btn-sm">Download mix</span>
+        </div>
+        <div class="lane"><div class="lane-tag"><span class="dot" style="background:var(--vocals)"></span>Vocals</div><div class="bars" data-c="var(--vocals)" data-s="3"></div></div>
+        <div class="lane"><div class="lane-tag"><span class="dot" style="background:var(--drums)"></span>Drums</div><div class="bars" data-c="var(--drums)" data-s="11"></div></div>
+        <div class="lane"><div class="lane-tag"><span class="dot" style="background:var(--bass)"></span>Bass</div><div class="bars" data-c="var(--bass)" data-s="23"></div></div>
+        <div class="lane"><div class="lane-tag"><span class="dot" style="background:var(--other)"></span>Other</div><div class="bars" data-c="var(--other)" data-s="41"></div></div>
+      </div>
+    </section>
 
-<!-- Navbar -->
-<nav id="main-nav">
-  <div class="nav-pill">
-    <a class="nav-wordmark" href="/">Audion<span>Labs</span></a>
-    <div class="nav-links">
-      <div class="nav-indicator"></div>
-      <a class="nav-item active" href="/">Home</a>
-      <a class="nav-item" href="/stems">Stems</a>
-      <a class="nav-item" href="/slowed-reverb">Slowed</a>
-      <a class="nav-item" href="/youtube-downloader">Download</a>
-      <a class="nav-item" href="/transcribe">Transcribe</a>
-    </div>
-    <div class="nav-auth">
-      <a class="nav-signin" href="#">Sign In</a>
-      <a class="nav-join" href="#">Join AudionLabs</a>
-    </div>
+    <section class="section" id="tools">
+      <div class="section-head"><h2>Pick a tool</h2><p>Each one does a single job well.</p></div>
+      <div class="tiles">
+        <a class="tile" href="/slowed-reverb">
+          <div class="tile-ico"><svg class="i"><use href="#i-wave"/></svg></div>
+          <h3>Slowed + Reverb <span class="tag-live">Live</span></h3>
+          <p>Drag the speed, reverb, warmth, and bass while the track plays. Export when it sounds right.</p>
+          <span class="btn btn-white btn-sm">Open</span>
+        </a>
+        <a class="tile" href="/stems">
+          <div class="tile-ico"><svg class="i"><use href="#i-split"/></svg></div>
+          <h3>Stem Splitter <span class="tag-live">Live</span></h3>
+          <p>Pull vocals, drums, bass, and the rest out of any song, then mute, solo, and rebalance them live.</p>
+          <span class="btn btn-white btn-sm">Open</span>
+        </a>
+        <a class="tile" href="/transcribe">
+          <div class="tile-ico"><svg class="i"><use href="#i-mic"/></svg></div>
+          <h3>Transcribe</h3>
+          <p>Turn audio or a YouTube link into text, subtitles, and a summary.</p>
+          <span class="btn btn-white btn-sm">Open</span>
+        </a>
+        <a class="tile" href="/youtube-downloader">
+          <div class="tile-ico"><svg class="i"><use href="#i-down"/></svg></div>
+          <h3>YouTube Downloader</h3>
+          <p>Save a video as MP3 or MP4, then send it straight to the other tools.</p>
+          <span class="btn btn-white btn-sm">Open</span>
+        </a>
+      </div>
+    </section>
   </div>
-</nav>
 
-<!-- Hero -->
-<section class="hero">
-  <h1>Professional Audio Tools</h1>
-  <p class="hero-sub">Split stems, slow tracks, and download YouTube audio — all in one place.</p>
+<!-- AD_SLOT -->
 
-  <div class="tool-grid">
-
-    <!-- Stem Splitter -->
-    <a class="tool-card" href="/stems">
-      <div class="tool-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="3" x2="12" y2="12"/>
-          <line x1="12" y1="12" x2="5" y2="21"/>
-          <line x1="12" y1="12" x2="19" y2="21"/>
-        </svg>
+  <div class="wrap">
+    <section class="section">
+      <div class="section-head"><h2>Three steps</h2><p>No account. No install.</p></div>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><h3>Drop a file</h3><p>MP3, WAV, and most other audio formats work.</p></div>
+        <div class="step"><div class="n">2</div><h3>Shape it live</h3><p>Move a slider and hear the result right away.</p></div>
+        <div class="step"><div class="n">3</div><h3>Download</h3><p>Export a WAV of exactly what you heard.</p></div>
       </div>
-      <h2>Stem Splitter</h2>
-      <p>Isolate vocals, drums, bass and other from any track using Demucs AI.</p>
-      <span class="tool-cta">Try Stem Splitter →</span>
-    </a>
+    </section>
 
-    <!-- Slowed + Reverb -->
-    <a class="tool-card" href="/slowed-reverb">
-      <div class="tool-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M2 12h2l3-7 4 14 4-10 3 3h4"/>
-        </svg>
+    <section class="section" id="faq">
+      <div class="section-head"><h2>Questions</h2></div>
+      <div class="faq">
+        <details>
+          <summary>Is AudionLabs free?</summary>
+          <p>Yes. Every tool on the site is free to use, with no account and no watermark on your exports.</p>
+        </details>
+        <details>
+          <summary>Do my files get uploaded?</summary>
+          <p>The Slowed + Reverb studio runs entirely in your browser, so those files never leave your device. Stem splitting and transcription need large AI models, so those files are sent to our server, processed, and kept only temporarily so you can download your results.</p>
+        </details>
+        <details>
+          <summary>Why does the pitch drop when I slow a track down?</summary>
+          <p>The studio changes speed the way a turntable or tape deck does. Slowing the playback lowers the pitch with it, and that is the sound slowed + reverb edits are known for. Speeding up raises the pitch in the same way, which is how nightcore edits are made.</p>
+        </details>
+        <details>
+          <summary>Can I slow down only the vocals?</summary>
+          <p>Yes. Split the song in the Stem Splitter, solo the vocals in the live mixer, then choose Open mix in Slowed + Reverb. Your vocal-only mix loads into the studio, ready to edit.</p>
+        </details>
+        <details>
+          <summary>Which file types work?</summary>
+          <p>The live studio opens anything your browser can play, including MP3, WAV, M4A, OGG, and FLAC. The Stem Splitter takes MP3 and WAV. Transcribe takes MP3, WAV, M4A, OGG, and FLAC.</p>
+        </details>
+        <details>
+          <summary>Does it work on a phone?</summary>
+          <p>Yes. Every tool works in a mobile browser. Very long tracks use a lot of memory in the live mixer, so a computer is the better choice for anything over ten minutes.</p>
+        </details>
       </div>
-      <h2>Slowed + Reverb</h2>
-      <p>Warm 6kHz low-pass with reverb tail. The signature slowed aesthetic, perfected.</p>
-      <span class="tool-cta">Try Slowed + Reverb →</span>
-    </a>
-
-    <!-- YouTube Downloader -->
-    <a class="tool-card" href="/youtube-downloader">
-      <div class="tool-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-      </div>
-      <h2>YouTube Downloader</h2>
-      <p>Download any YouTube video as MP3 or MP4, then process it directly with AudionLabs.</p>
-      <span class="tool-cta">Try Downloader →</span>
-    </a>
-
-    <!-- Transcribe -->
-    <a class="tool-card" href="/transcribe">
-      <div class="tool-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24"
-        fill="none" stroke="currentColor" stroke-width="1.8"
-        stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
-          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-          <line x1="12" y1="19" x2="12" y2="22"/>
-          <line x1="8" y1="22" x2="16" y2="22"/>
-        </svg>
-      </div>
-      <h2>Transcribe</h2>
-      <p>Convert any audio or YouTube video to text with AI. Get full transcripts, summaries and SRT subtitle files.</p>
-      <span class="tool-cta">Try Transcribe →</span>
-    </a>
-
+    </section>
   </div>
-</section>
+</main>
 
-<!-- About -->
-<section class="about" id="about">
-  <h2>Built for Creators</h2>
-  <p>AudionLabs is a professional audio processing suite for YouTube creators, DJs, and remix artists. No installs. No setup. Just results.</p>
-</section>
-
-<!-- Footer -->
-<footer>© 2026 AudionLabs</footer>
-
-<script>
-  (function () {
-    var active = document.querySelector(".nav-item.active");
-    var indicator = document.querySelector(".nav-indicator");
-    function position() {
-      if (!active || !indicator) return;
-      indicator.style.width = active.offsetWidth + "px";
-      indicator.style.left = active.offsetLeft + "px";
-    }
-    position();
-    window.addEventListener("resize", position);
-  })();
-</script>
-
+<!-- FOOTER -->
+<script src="/static/app.js?v=__V__"></script>
 </body>
 </html>

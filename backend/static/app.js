@@ -18,11 +18,29 @@
   }
   positionNavIndicator();
   window.addEventListener("resize", positionNavIndicator);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(positionNavIndicator);
+
+  // --- Landing page: decorative stem waveform ---
+  if (page === "/") {
+    document.querySelectorAll(".bars").forEach(function (el) {
+      var seed = parseInt(el.getAttribute("data-s"), 10) || 1;
+      var color = el.getAttribute("data-c");
+      for (var k = 0; k < 72; k++) {
+        seed = (seed * 9301 + 49297) % 233280;
+        var env = 0.35 + 0.65 * Math.abs(Math.sin((k + seed % 7) / 9));
+        var bar = document.createElement("i");
+        bar.style.height = Math.round(12 + (seed / 233280) * 88 * env) + "%";
+        bar.style.background = color;
+        el.appendChild(bar);
+      }
+    });
+  }
 
   // ================================================================
-  //  STEMS + SLOWED-REVERB PAGES (upload → /process_audio)
+  //  STEMS PAGE (upload → /process_audio → live mixer)
+  //  The Slowed + Reverb page is handled by studio.js.
   // ================================================================
-  if (page === "/stems" || page === "/slowed-reverb") {
+  if (page === "/stems") {
     var dropZone      = document.getElementById("drop-zone");
     var fileInput     = document.getElementById("file-input");
     var browseBtn     = document.getElementById("browse-btn");
@@ -51,6 +69,13 @@
 
     var selectedFile = null;
     var progressTimer = null;
+    var mixerRoot = document.getElementById("mixer");
+    var mixer = null;
+    var uploadCard = dropZone.closest(".card");
+
+    function closeMixer() {
+      if (mixer) { mixer.destroy(); mixer = null; }
+    }
 
     function show(el) { el.hidden = false; }
     function hide(el) { el.hidden = true; }
@@ -67,6 +92,7 @@
     }
 
     function resetToUpload() {
+      closeMixer();
       selectedFile = null;
       fileInput.value = "";
       clearProgressTimer();
@@ -78,6 +104,7 @@
       hide(resultsCard);
       hide(errorCard);
       show(dropZone);
+      if (uploadCard) show(uploadCard);
 
       resultStems.querySelector(".result-links").innerHTML = "";
       resultSlowed.querySelector(".result-links").innerHTML = "";
@@ -210,6 +237,7 @@
       hide(optionsCard);
       hide(dropZone);
       hide(fileInfo);
+      if (uploadCard) hide(uploadCard);
       hide(errorCard);
       hide(resultsCard);
 
@@ -263,6 +291,15 @@
           container.appendChild(a);
         }
         show(resultStems);
+
+        // Live mixer: mute, solo, and rebalance the stems before downloading.
+        closeMixer();
+        if (mixerRoot && window.ALMixer) {
+          mixer = window.ALMixer.mount(mixerRoot, data.stems, {
+            name: selectedFile ? selectedFile.name : "track"
+          });
+          window.__alMixer = mixer;
+        }
       }
 
       if (data.slowed_mix) {

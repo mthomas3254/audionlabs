@@ -4,9 +4,11 @@ from typing import Optional, Dict
 
 from fastapi import FastAPI, File, Request, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+
+from . import pages
 
 from .config import (
     UPLOADS_DIR,
@@ -61,29 +63,37 @@ async def no_cache_static(request: Request, call_next):
 
 # --- Page routes ---
 
-@app.get("/")
-async def index():
-    return FileResponse(STATIC_DIR / "index.html")
+# Every public page is assembled by pages.render_page, which fills in the shared
+# partials, the asset version stamp, and AdSense tags when they are configured.
+
+def _register_page(path: str, filename: str, active: str, ads: bool) -> None:
+    async def page():
+        return pages.render_page(filename, active=active, ads=ads)
+
+    page.__name__ = "page_" + (filename.replace("-", "_").replace(".html", ""))
+    app.get(path, include_in_schema=False)(page)
 
 
-@app.get("/stems")
-async def stems_page():
-    return FileResponse(STATIC_DIR / "stems.html")
+for _path, _filename, _active, _ads in pages.PAGES:
+    _register_page(_path, _filename, _active, _ads)
 
 
-@app.get("/slowed-reverb")
-async def slowed_reverb_page():
-    return FileResponse(STATIC_DIR / "slowed-reverb.html")
+@app.get("/ads.txt", include_in_schema=False)
+async def ads_txt():
+    body = pages.ads_txt()
+    if not body:
+        raise HTTPException(status_code=404, detail="Not found")
+    return PlainTextResponse(body)
 
 
-@app.get("/youtube-downloader")
-async def youtube_downloader_page():
-    return FileResponse(STATIC_DIR / "youtube-downloader.html")
+@app.get("/robots.txt", include_in_schema=False)
+async def robots_txt():
+    return PlainTextResponse(pages.robots_txt())
 
 
-@app.get("/transcribe")
-async def transcribe_page():
-    return FileResponse(STATIC_DIR / "transcribe.html")
+@app.get("/sitemap.xml", include_in_schema=False)
+async def sitemap_xml():
+    return Response(pages.sitemap_xml(), media_type="application/xml")
 
 
 # --- API routes ---
