@@ -1,246 +1,114 @@
-# audionlabs — Claude Code Context
+# AudionLabs — Claude Code Context
 
-## Product Type
-Public SaaS — unified AudionLabs platform
+## READ THIS FIRST
+Read BLUEPRINT.md completely before touching any code.
+BLUEPRINT.md is the single source of truth.
 
-## Owner
-Malik Thomas
+## Quick Reference
+- **Owner:** Malik Thomas
+- **Path:** C:\Users\User\PycharmProjects\audionlabs\
+- **GitHub:** mthomas3254/audionlabs (private)
+- **Live URL:** https://audionlabs.ai
+- **Railway URL:** audionlabs-production.up.railway.app
+- **Run locally:** python -m uvicorn backend.main:app --port 8000
+- **Stack:** Python 3.14 + FastAPI + Demucs + Whisper + Claude API
+- **Status:** LIVE IN PRODUCTION (v2 revamp shipped Sep 19, 2026)
+- **Tests:** .venv\Scripts\python -m pytest tests -q
 
 ## What This Does
-AudionLabs is a professional audio processing suite for
-YouTube creators, DJs, and remix artists. Four tools in
-one platform: stem splitting, slowed+reverb, YouTube
-downloading, and AI transcription. Each tool has its own
-SEO-optimized page.
+AudionLabs is a professional audio processing SaaS for YouTube creators,
+DJs, remix artists, and producers. Four tools, one platform:
+1. Stem Splitter (Demucs AI) + LIVE in-browser stem mixer (mute, solo, rebalance, export)
+2. Slowed + Reverb LIVE studio (Web Audio in the browser: speed, reverb, warmth, bass, WAV export)
+3. YouTube Downloader (yt-dlp — MP3/MP4)
+4. AI Transcription (Whisper + Claude Sonnet — free + Pro features)
 
-## Target Users
-YouTube creators, TikTok creators, DJs, remix artists, producers
+## Pages & Endpoints
+| Route | File | Status |
+|-------|------|--------|
+| / | index.html | LIVE |
+| /stems | stems.html | LIVE |
+| /slowed-reverb | slowed-reverb.html | LIVE |
+| /youtube-downloader | youtube-downloader.html | LIVE |
+| /transcribe | transcribe.html | LIVE |
+| /privacy, /terms | privacy.html, terms.html | LIVE |
+| /ads.txt, /robots.txt, /sitemap.xml | backend/pages.py | LIVE (ads.txt only when ADSENSE_CLIENT is set) |
+| POST /process_audio | stems + slowed+reverb | WORKING |
+| POST /download | YouTube yt-dlp | BROKEN (Bug 14) |
+| POST /transcribe | Whisper + Claude API | WORKING |
+| GET /health | health check | WORKING |
 
-## Current Stack
-- Python 3.14 + FastAPI (backend)
-- Uvicorn (ASGI server)
-- torch==2.10.0+cpu / torchaudio==2.10.0+cpu (Python 3.14 compatible)
-- Demucs (stem separation via CLI subprocess)
-- FFmpeg + ffprobe (system-wide install required)
-- yt-dlp (YouTube downloading)
-- Pydub (audio utility)
-- openai-whisper (transcription — small model)
-- anthropic SDK (Claude API — summary + key topics)
-- HTML + CSS + JS frontend (multi-page)
+## Current Status — Feature Checklist
+- [x] Landing page
+- [x] Stems page + backend (Demucs)
+- [x] Slowed+reverb page + backend (FFmpeg)
+- [x] YouTube downloader page + backend (yt-dlp)
+- [x] Transcribe page + backend (Whisper + Claude API)
+- [x] Railway deployment
+- [x] Custom domain (audionlabs.ai via Cloudflare)
+- [x] SSL/HTTPS (Cloudflare)
+- [x] v2 light pill UI on all pages (Sep 19, 2026)
+- [x] Live Slowed + Reverb studio (studio.js)
+- [x] Live stem mixer (mixer.js)
+- [x] AdSense plumbing, privacy, terms, ads.txt (waiting on publisher id)
+- [x] pytest suite (tests/)
+- [ ] **YouTube bot detection (Bug 14 — needs a residential proxy in YTDLP_PROXY)**
+- [ ] Rate limiting
+- [ ] File size limits (100MB)
+- [ ] File type validation
+- [ ] Google Analytics 4
+- [ ] Email capture (Mailchimp)
+- [ ] Stripe + Pro tier
+- [ ] Auth system
+- [ ] Persistent file storage
 
-## Pages
-- / → index.html (landing page — all four tools)
-- /stems → stems.html (stem splitter tool)
-- /slowed-reverb → slowed-reverb.html (slowed+reverb tool)
-- /youtube-downloader → youtube-downloader.html (YT downloader)
-- /transcribe → transcribe.html (AI transcription tool)
-
-## API Endpoints
-- POST /process_audio → stem split + slowed+reverb
-- POST /download → YouTube MP3/MP4 download
-- POST /transcribe → Whisper transcription + Claude AI summary
-- GET /file?path= → serve downloaded file
-- GET /health → status check
-
-## Folder Structure
-audionlabs/
-├── backend/
-│   ├── __init__.py
-│   ├── main.py
-│   ├── config.py
-│   └── core/
-│       ├── __init__.py
-│       ├── demucs_engine.py
-│       ├── slowed_engine.py
-│       ├── downloader.py
-│       └── transcribe_engine.py
-│   └── services/
-│       ├── __init__.py
-│       └── file_manager.py
-├── backend/static/
-│   ├── index.html
-│   ├── stems.html
-│   ├── slowed-reverb.html
-│   ├── youtube-downloader.html
-│   ├── transcribe.html
-│   ├── style.css
-│   └── app.js
-├── uploads/
-├── downloads/
-├── requirements.txt
-├── .env.example
-├── .gitignore
-└── CLAUDE.md
-
-## Audio Settings (LOCKED — do not change)
-- Slowed+reverb: 0.9x speed, 6kHz lowpass,
-  loudnorm I=-16 TP=-1.5 LRA=11
+## Audio Settings (LOCKED — NEVER CHANGE)
+- Slowed+reverb: 0.9x speed, 6kHz lowpass, loudnorm I=-16 TP=-1.5 LRA=11
 - Demucs model: htdemucs
 
-## Current Status
-- Project setup -- DONE
-- Landing page (index.html) -- DONE
-- Stems page (stems.html) -- DONE
-- Slowed+reverb page (slowed-reverb.html) -- DONE
-- YouTube downloader page (youtube-downloader.html) -- DONE
-- Merged backend (main.py + config.py) -- DONE
-- SEO meta tags on all pages -- DONE
-- Stem splitting end-to-end test -- DONE (working)
-- Slowed+reverb end-to-end test -- DONE (working)
-- YouTube downloader end-to-end test -- DONE (working)
-- YouTube → AudionLabs pipeline test -- DONE (working)
-- All three tools fully tested end-to-end -- DONE
-- Progress bar on YouTube downloader processing -- DONE
-- Transcribe page frontend -- DONE
-- Transcribe backend (Whisper + Claude API) -- DONE
-- Transcribe end-to-end test -- DONE (working)
-- Navbar update (Transcribe + Sign In + Join) -- DONE
-- Railway deployment -- DONE
-- Custom domain (audionlabs.ai) -- DONE
-- Cloudflare DNS + SSL -- DONE
-- Production deployment -- COMPLETE
+## Next Session Priorities (in order)
+0. **AdSense** — owner creates the account, then set ADSENSE_CLIENT and ADSENSE_SLOT in Railway
+1. **Bug 14** — set YTDLP_PROXY to a residential proxy, or retire the downloader. PO tokens do not help
+2. **Security hardening** — rate limiting, file size limits, file type validation, Cloudflare WAF
+3. **Analytics** — Google Analytics 4 on all pages
+4. **Email capture** — Mailchimp signup on landing page
+5. **Stripe + Pro tier** — $9.99/month, usage limits on free tier
+6. **Persistent storage** — Railway Volumes or S3 (files deleted on redeploy)
 
-## Known Issues
-- torch/torchaudio pinned to 2.10.0+cpu (Python 3.14)
-- FFmpeg must be installed system-wide (static build — no shared DLLs)
-- Run without --reload flag on Windows to avoid zombie processes
-- Whisper small model downloads ~462MB on first run
-- Whisper CPU processing takes 1-2 mins per track
-- Pro PDF export is placeholder (alert only) — needs real implementation
-- Files uploaded to Railway are ephemeral — deleted on
-  every redeploy. Need persistent storage (Railway
-  Volumes or S3) before heavy production use.
-- Whisper model is baked into Docker image — re-downloaded
-  on every new build if cache is cleared
-
-## Next Session Priorities
-1. Confirm audionlabs.ai is live after DNS propagation
-2. Add audionlabs.ai as custom domain in Railway
-3. Test all 4 tools on live production URL
-4. Security hardening:
-   - Rate limiting (max requests per IP per minute)
-   - File size limits (max 100MB enforced in backend)
-   - File type validation (strict MP3/WAV/M4A only)
-   - Cloudflare WAF rules (block bad bots, SQL injection)
-5. Persistent file storage (Railway Volumes)
-6. Auth + Stripe (Pro tier)
-
-## LIVE PRODUCTION
-- URL: https://audionlabs.ai
-- Railway: audionlabs-production.up.railway.app
-- Status: LIVE
-
-## Deployment
-- Platform: Railway
-- Live URL: https://audionlabs.ai
-- Railway URL: audionlabs-production.up.railway.app
+## Deployment Info
+- Platform: Railway (Dockerfile — python:3.11-slim)
 - Region: asia-southeast1
-- Port: 8000
+- Port: 8000 (hardcoded — no $PORT expansion issue)
+- Cloudflare proxy: active (orange cloud)
 - Auto-deploys on every git push to master
+- ANTHROPIC_API_KEY set in Railway Variables
+- Whisper small model (~462MB) baked into Docker image
 
-## PLANNED FEATURES
+## Known Active Bugs
+See BLUEPRINT.md → Known Bugs section for full detail.
+- **Bug 14 (OPEN):** YouTube blocks the Railway datacenter IP. Needs YTDLP_PROXY. Not a code bug
+- **Bug 1 (FIXED):** torchaudio torchcodec save error — sitecustomize.py patch
+- **Bug 2 (FIXED):** sys.executable wrong Python on Windows — VENV_PYTHON fix
+- **Bug 11 (FIXED):** Railway port mismatch — hardcoded 8000
+- **Bug 12 (FIXED):** JSON credentials corruption — Raw Editor paste
+- **Bug 13 (FIXED):** $PORT not expanding in railway.toml startCommand
 
-### Transcribe Tool (/transcribe)
-- Input: Audio file upload OR YouTube URL
-- Free outputs: Full transcript, SRT subtitle file, .txt download
-- Paid outputs (Pro): AI summary, Key topics, Timestamps/chapters, PDF export
-- Tech: openai-whisper (local) + Claude API (summary/topics)
-- Status: DONE (free + pro UI built, PDF gating is placeholder)
+## Critical Rules
+- NEVER use --reload flag on Windows (zombie processes)
+- NEVER commit .env
+- NEVER change audio settings (6kHz, 0.9x, loudnorm values)
+- NEVER use sys.executable in subprocess — always use VENV_PYTHON
+- Always lazy-load heavy imports (torch, demucs, whisper) inside endpoints
+- sitecustomize.py patch must be in Docker image AND local venv
+- NEVER rename an element id that app.js or studio.js looks up (tests/test_site.py enforces this)
+- Pages use placeholders filled by backend/pages.py. Load them through the app, not as files
+- NEVER inject ads on /youtube-downloader (Google publisher policy)
+- Run the tests before every push. Master auto-deploys
 
-### Auth System
-- Email + password accounts
-- Free tier vs Pro tier
-- JWT tokens
-- Status: NOT STARTED — placeholder Sign In / Join buttons in nav
-
-### Payments
-- Stripe integration
-- Pro subscription gates: AI summary, key topics, PDF export, transcription paid features
-- Status: NOT STARTED
-
-### UI Updates Planned
-- Navbar: Add Transcribe nav item + Sign In + Join AudionLabs buttons (all pages)
-- transcribe.html: Full working UI with tab input, progress, results
-- Status: DONE
-
-## Important Notes
-- This replaces both MVAT_stem_webapp and audionlabs-downloader
-- Single port: 8000
-- No cross-server calls — downloader and processor are in same app
-- Keep MVAT_stem_webapp and audionlabs-downloader repos intact
-- Run server: uvicorn backend.main:app --port 8000
-
-## KNOWN BUGS — DO NOT REMOVE OR MODIFY THIS SECTION
-
-### Bug 1: torchaudio torchcodec save error
-- **Symptom:** Demucs processes audio successfully
-  (progress bar completes) but then throws:
-  "ImportError: TorchCodec is required for
-  save_with_torchcodec"
-- **Root cause:** torchaudio 2.9+ hardcodes torchcodec
-  as the default audio save backend. torchcodec requires
-  FFmpeg shared DLLs ("full-shared" build) which conflicts
-  with the static FFmpeg build installed on this system.
-  No torchaudio 2.8.x exists for Python 3.14.
-- **Fix:** sitecustomize.py monkey-patch in .venv that
-  replaces torchaudio.save with soundfile.write. Located at:
-  .venv/Lib/site-packages/sitecustomize.py
-  Also requires: pip install soundfile
-- **First encountered:** MVAT_stem_webapp (Python 3.11,
-  torch 2.5.1). Reappeared in audionlabs (Python 3.14,
-  torch 2.10.0). Will likely reappear on any new
-  environment.
-- **Prevention:** Always copy sitecustomize.py and install
-  soundfile when setting up a new venv. Do NOT install
-  torchcodec — it will fail on static FFmpeg builds.
-- **Status:** FIXED — sitecustomize.py patch active
-
-### Bug 2: sys.executable wrong Python on Windows
-- **Symptom:** Demucs or yt-dlp subprocess calls fail
-  with "No module named demucs/yt_dlp" even though
-  they are installed in the venv
-- **Root cause:** sys.executable resolves to the system
-  Python (C:\Python314\python.exe) instead of the venv
-  Python when uvicorn is started from a different context
-- **Fix:** Use explicit venv Python path in subprocess:
-  VENV_PYTHON = Path(__file__).resolve().parents[2] /
-  ".venv" / "Scripts" / "python.exe"
-  PYTHON = str(VENV_PYTHON) if VENV_PYTHON.exists()
-  else sys.executable
-- **First encountered:** audionlabs merged project
-- **Status:** FIXED — both demucs_engine.py and
-  downloader.py use VENV_PYTHON
-
-### Bug 3: New venv setup checklist
-- **Symptom:** Multiple bugs appear when setting up
-  a new venv from requirements.txt alone
-- **Root cause:** Several fixes exist outside of
-  requirements.txt that won't be replicated by just
-  running pip install
-- **Fix:** When setting up a new venv, always do ALL
-  of these steps in order:
-  1. pip install -r requirements.txt
-  2. pip install soundfile
-  3. Copy sitecustomize_backup.py to
-     .venv/Lib/site-packages/sitecustomize.py
-  4. Verify demucs_engine.py and downloader.py use
-     VENV_PYTHON not sys.executable
-  5. Test with: .venv/Scripts/python.exe -c
-     "import torchaudio, torch, demucs; print('OK')"
-- **Status:** DOCUMENTED — follow checklist on new
-  environment setup
-
-## ENVIRONMENT SETUP CHECKLIST
-Run these steps IN ORDER when setting up on a new machine:
-
-1. python -m venv .venv
-2. .venv\Scripts\pip install -r requirements.txt
-3. .venv\Scripts\pip install soundfile
-4. Copy sitecustomize_backup.py to
-   .venv\Lib\site-packages\sitecustomize.py
-5. Verify FFmpeg is installed system-wide: ffmpeg -version
-6. Verify yt-dlp works: .venv\Scripts\python -m yt_dlp --version
-7. Test all imports: .venv\Scripts\python -c
-   "import fastapi, demucs, torchaudio, torch, yt_dlp; print('ALL OK')"
-8. Start server: python -m uvicorn backend.main:app --port 8000
-9. Health check: curl http://localhost:8000/health
+## Go-To-Market (parallel to dev)
+- TikTok/Reels: demo videos (YouTube → stems pipeline)
+- Product Hunt: launch Tuesday 12:01am PST
+- SEO: Google Search Console + JSON-LD structured data
+- Twitter/X: founder story + build thread
+- Directories: Futurepedia, AlternativeTo, AI Tool Hunt
+- Revenue model: Free (5/day) → Pro $9.99/mo → Ads (AdSense)

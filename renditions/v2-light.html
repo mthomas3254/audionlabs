@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AudionLabs v2 mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFFFFF; --bg-alt:#F5F5F7; --fill:#F0F0F3; --fill-2:#E6E6EB;
+  --text:#1D1D1F; --text-2:#6E6E73; --text-3:#757579;
+  --line:rgba(0,0,0,.08); --line-2:rgba(0,0,0,.16);
+  --ink:#1D1D1F;
+  --accent:#6E3FF3; --accent-soft:rgba(110,63,243,.09);
+  --ok:#1E8E3E; --danger:#C9001A; --danger-soft:rgba(201,0,26,.07);
+  --vocals:#FF375F; --drums:#FF9F0A; --bass:#0A84FF; --other:#30B350;
+  --pill:999px;
+  --float:0 8px 30px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --card:0 1px 2px rgba(0,0,0,.04),0 16px 48px rgba(0,0,0,.07);
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Inter,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;letter-spacing:-.011em;line-height:1.5}
+h1,h2,h3,p{margin:0}
+a{color:inherit}
+:focus-visible{outline:3px solid rgba(110,63,243,.45);outline-offset:2px}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:50px;padding:0 26px;border-radius:var(--pill);border:0;font:600 15px/1 inherit;letter-spacing:-.01em;cursor:pointer;text-decoration:none;transition:transform .15s var(--ease),background .2s}
+.btn:active{transform:scale(.97)}
+.btn-ink{background:var(--ink);color:#fff}.btn-ink:hover{background:#000}
+.btn-ghost{background:var(--fill);color:var(--text)}.btn-ghost:hover{background:var(--fill-2)}
+.btn-white{background:#fff;color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.btn-sm{height:36px;padding:0 16px;font-size:13px}
+.btn-block{width:100%}
+
+.nav{position:fixed;top:14px;left:0;right:0;margin:0 auto;width:max-content;max-width:calc(100vw - 24px);z-index:50;display:flex;align-items:center;gap:6px;padding:6px;border-radius:var(--pill);background:rgba(255,255,255,.78);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border:1px solid var(--line);box-shadow:var(--float)}
+.brand{font-weight:700;font-size:15px;padding:0 12px;text-decoration:none;letter-spacing:-.025em}
+.brand span{color:var(--accent)}
+.nav-links{position:relative;display:flex;background:var(--fill);border-radius:var(--pill);padding:3px}
+.nav-ind{position:absolute;top:3px;bottom:3px;left:0;width:0;border-radius:var(--pill);background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.14);transition:left .35s var(--ease),width .35s var(--ease)}
+.nav-item{position:relative;z-index:1;padding:8px 15px;border-radius:var(--pill);font-size:14px;font-weight:500;color:var(--text-2);text-decoration:none;white-space:nowrap;transition:color .2s}
+.nav-item:hover,.nav-item.active{color:var(--text)}
+
+.tabbar{display:none}
+@media (max-width:720px){
+  .nav .nav-links,.nav .btn{display:none}
+  .nav{padding:10px 8px}
+  .tabbar{position:fixed;bottom:12px;left:0;right:0;margin:0 auto;width:calc(100vw - 24px);max-width:440px;z-index:50;display:flex;padding:6px;border-radius:28px;background:rgba(255,255,255,.86);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border:1px solid var(--line);box-shadow:var(--float)}
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;border-radius:22px;font-size:11px;font-weight:500;color:var(--text-2);text-decoration:none}
+  .tab.active{background:var(--fill);color:var(--text)}
+  .tab.active svg{color:var(--accent)}
+  body{padding-bottom:96px}
+}
+
+.wrap{max-width:1020px;margin:0 auto;padding:0 20px}
+.hero{text-align:center;padding:150px 0 0}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:var(--pill);background:var(--accent-soft);color:var(--accent);font-size:13px;font-weight:600}
+.hero h1{margin-top:22px;font-size:clamp(42px,7.4vw,80px);font-weight:700;letter-spacing:-.045em;line-height:1.02}
+.hero h1 em{font-style:normal;color:var(--text-3)}
+.lede{max-width:560px;margin:22px auto 0;font-size:clamp(17px,2vw,20px);color:var(--text-2);line-height:1.45}
+.cta-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:32px}
+
+.stage{margin-top:64px;background:var(--bg-alt);border-radius:36px;padding:30px clamp(18px,4vw,40px)}
+.stage-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.track{display:flex;align-items:center;gap:12px;min-width:0;text-align:left}
+.art{width:44px;height:44px;border-radius:12px;background:var(--ink);color:#fff;display:grid;place-items:center;flex-shrink:0}
+.track b{display:block;font-size:15px;font-weight:600}
+.track small{color:var(--text-2);font-size:13px}
+.lane{display:flex;align-items:center;gap:14px;padding:9px 0}
+.lane-tag{width:86px;flex-shrink:0;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.bars{flex:1;display:flex;align-items:center;gap:3px;height:42px;overflow:hidden}
+.bars i{flex:1;min-width:2px;border-radius:2px;opacity:.9}
+
+.section{padding:110px 0 0}
+.section-head{text-align:center;margin-bottom:36px}
+.section-head h2{font-size:clamp(30px,4.4vw,46px);font-weight:700;letter-spacing:-.035em;line-height:1.08}
+.section-head p{margin-top:12px;color:var(--text-2);font-size:18px}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.tile{display:flex;flex-direction:column;min-height:236px;padding:30px;border-radius:30px;background:var(--bg-alt);text-decoration:none;transition:transform .3s var(--ease),background .2s}
+.tile:hover{transform:translateY(-3px);background:#EFEFF3}
+.tile-ico{width:50px;height:50px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.tile h3{margin-top:22px;font-size:24px;font-weight:600;letter-spacing:-.025em}
+.tile p{margin-top:6px;margin-bottom:20px;color:var(--text-2);font-size:16px;max-width:380px}
+.tile .btn{margin-top:auto;align-self:flex-start}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.step{padding:26px;border-radius:26px;border:1px solid var(--line)}
+.step .n{width:34px;height:34px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:14px;font-weight:600}
+.step h3{margin-top:16px;font-size:18px;font-weight:600;letter-spacing:-.02em}
+.step p{margin-top:4px;color:var(--text-2);font-size:15px}
+@media (max-width:720px){.tiles,.steps{grid-template-columns:1fr}.hero{padding-top:110px}.section{padding-top:80px}.lane-tag{width:70px}.tool-head{padding-top:104px!important}}
+
+.tool-head{text-align:center;padding:140px 0 0}
+.tool-head h1{font-size:clamp(34px,5.4vw,56px);font-weight:700;letter-spacing:-.04em;line-height:1.05}
+.tool-head p{max-width:500px;margin:14px auto 0;color:var(--text-2);font-size:18px;line-height:1.45}
+.card{max-width:620px;margin:34px auto 0;background:#fff;border:1px solid var(--line);border-radius:30px;padding:20px;box-shadow:var(--card)}
+.card + .card{margin-top:16px}
+.drop{border:1.5px dashed var(--line-2);background:var(--bg-alt);border-radius:22px;padding:42px 20px;text-align:center;transition:border-color .2s,background .2s}
+.drop:hover{border-color:var(--accent);background:var(--accent-soft)}
+.drop-ico{width:58px;height:58px;margin:0 auto;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.drop h3{margin-top:16px;font-size:18px;font-weight:600;letter-spacing:-.02em}
+.drop .hint{margin-top:4px;color:var(--text-3);font-size:14px}
+.drop .btn{margin-top:18px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.chip{display:flex;align-items:center;gap:10px;margin-top:12px;padding:8px 8px 8px 16px;border-radius:var(--pill);background:var(--fill);font-size:14px;font-weight:500}
+.chip span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip button{width:30px;height:30px;border-radius:50%;border:0;background:#fff;font-size:17px;line-height:1;cursor:pointer;color:var(--text-2)}
+.opt{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 6px}
+.opt b{display:block;font-size:16px;font-weight:600}
+.opt small{color:var(--text-2);font-size:14px}
+.switch{position:relative;width:51px;height:31px;flex-shrink:0}
+.switch input{position:absolute;inset:0;opacity:0;cursor:pointer;margin:0;width:100%;height:100%}
+.switch i{position:absolute;inset:0;border-radius:var(--pill);background:var(--fill-2);transition:background .25s;pointer-events:none}
+.switch i::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.2);transition:transform .25s var(--ease)}
+.switch input:checked + i{background:var(--ok)}
+.switch input:checked + i::after{transform:translateX(20px)}
+.busy{padding:26px 8px;text-align:center}
+.busy b{font-size:17px;font-weight:600}
+.bar{height:8px;margin:16px 0 12px;border-radius:var(--pill);background:var(--fill-2);overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:var(--pill);background:var(--accent);transition:width .5s var(--ease)}
+.busy small{color:var(--text-2);font-size:14px}
+.done-head{display:flex;align-items:center;gap:12px;padding:8px 6px 14px}
+.check{width:34px;height:34px;border-radius:50%;background:rgba(30,142,62,.12);color:var(--ok);display:grid;place-items:center}
+.done-head h2{font-size:20px;font-weight:600;letter-spacing:-.02em}
+.res{display:flex;align-items:center;gap:12px;padding:12px 6px;border-top:1px solid var(--line)}
+.res span{flex:1;font-size:15px;font-weight:500}
+.res small{color:var(--text-3);font-size:13px;margin-right:4px}
+.err{display:flex;gap:12px;align-items:flex-start;padding:16px;border-radius:20px;background:var(--danger-soft);color:var(--danger);font-size:15px;font-weight:500}
+.seg{display:flex;background:var(--fill);padding:3px;border-radius:var(--pill);margin-bottom:14px}
+.seg button{flex:1;height:40px;border-radius:var(--pill);border:0;background:transparent;font:500 14px inherit;color:var(--text-2);cursor:pointer}
+.seg button.on{background:#fff;color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.field{width:100%;height:54px;border-radius:var(--pill);border:1px solid var(--line-2);padding:0 22px;font:400 16px inherit;color:var(--text);background:#fff}
+.field::placeholder{color:var(--text-3)}
+.field:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.stack > * + *{margin-top:12px}
+.pro{margin-top:14px;padding:18px;border-radius:22px;background:var(--accent-soft)}
+.pro-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.badge{padding:4px 10px;border-radius:var(--pill);background:var(--accent);color:#fff;font-size:12px;font-weight:600}
+.pro p{font-size:15px;color:var(--text)}
+.topics{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.topics span{padding:6px 12px;border-radius:var(--pill);background:#fff;font-size:13px;font-weight:500}
+.label{font-size:13px;font-weight:600;color:var(--text-3);padding:4px 6px 8px}
+.transcript{max-height:120px;overflow:auto;padding:14px 16px;border-radius:18px;background:var(--bg-alt);font-size:15px;line-height:1.6}
+.more{text-align:center;margin-top:56px}
+.more p{font-size:14px;font-weight:600;color:var(--text-3);margin-bottom:12px}
+.more div{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.mock{max-width:620px;margin:16px auto 0;padding:12px 16px;border-radius:18px;border:1px dashed var(--line-2);display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--text-3)}
+.mock button{height:30px;padding:0 12px;border-radius:var(--pill);border:1px solid var(--line-2);background:#fff;font:500 12px inherit;cursor:pointer}
+footer{margin-top:120px;border-top:1px solid var(--line)}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-top:26px;padding-bottom:26px;font-size:14px;color:var(--text-2)}
+footer nav{display:flex;gap:18px;flex-wrap:wrap}
+footer a{text-decoration:none}footer a:hover{color:var(--text)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></symbol>
+  <symbol id="i-split" viewBox="0 0 24 24"><path d="M12 3v8"/><path d="M12 11l-7 10"/><path d="M12 11l7 10"/></symbol>
+  <symbol id="i-wave" viewBox="0 0 24 24"><path d="M2 12h2l3-7 4 14 4-10 3 3h4"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 20h16"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 11a7 7 0 0 1-14 0"/><path d="M12 18v4"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5v.01"/></symbol>
+</svg>
+
+<header class="nav">
+  <a class="brand" href="#home">Audion<span>Labs</span></a>
+  <nav class="nav-links" aria-label="Tools">
+    <div class="nav-ind"></div>
+    <a class="nav-item" data-nav="home" href="#home">Home</a>
+    <a class="nav-item" data-nav="stems" href="#stems">Stems</a>
+    <a class="nav-item" data-nav="slowed" href="#slowed">Slowed</a>
+    <a class="nav-item" data-nav="download" href="#download">Download</a>
+    <a class="nav-item" data-nav="transcribe" href="#transcribe">Transcribe</a>
+  </nav>
+  <a class="btn btn-ink btn-sm" href="#stems">Split a track</a>
+</header>
+
+<nav class="tabbar" aria-label="Tools">
+  <a class="tab" data-nav="home" href="#home"><svg class="i"><use href="#i-home"/></svg>Home</a>
+  <a class="tab" data-nav="stems" href="#stems"><svg class="i"><use href="#i-split"/></svg>Stems</a>
+  <a class="tab" data-nav="slowed" href="#slowed"><svg class="i"><use href="#i-wave"/></svg>Slowed</a>
+  <a class="tab" data-nav="download" href="#download"><svg class="i"><use href="#i-down"/></svg>Download</a>
+  <a class="tab" data-nav="transcribe" href="#transcribe"><svg class="i"><use href="#i-mic"/></svg>Transcribe</a>
+</nav>
+
+<main data-view="home">
+  <div class="wrap">
+    <section class="hero">
+      <span class="eyebrow">Four tools. One tab.</span>
+      <h1>Pro audio tools.<br><em>Zero setup.</em></h1>
+      <p class="lede">Split stems, make slowed + reverb edits, grab YouTube audio, and transcribe anything. It all runs in your browser.</p>
+      <div class="cta-row">
+        <a class="btn btn-ink" href="#stems">Split a track</a>
+        <a class="btn btn-ghost" href="#tools">See all tools</a>
+      </div>
+      <div class="stage" aria-hidden="true">
+        <div class="stage-top">
+          <div class="track"><div class="art"><svg class="i"><use href="#i-note"/></svg></div><div><b>your-track.mp3</b><small>Split into 4 stems</small></div></div>
+          <span class="btn btn-white btn-sm">Download all</span>
+        </div>
+        <div class="lane"><div class="lane-tag"><span class="dot" style="background:var(--vocals)"></span>Vocals</div><div class="bars" data-c="var(--vocals)" data-s="3"></div></div>
+        <div class="lane"><div class="lane-tag"><span class="dot" style="background:var(--drums)"></span>Drums</div><div class="bars" data-c="var(--drums)" data-s="11"></div></div>
+        <div class="lane"><div class="lane-tag"><span class="dot" style="background:var(--bass)"></span>Bass</div><div class="bars" data-c="var(--bass)" data-s="23"></div></div>
+        <div class="lane"><div class="lane-tag"><span class="dot" style="background:var(--other)"></span>Other</div><div class="bars" data-c="var(--other)" data-s="41"></div></div>
+      </div>
+    </section>
+
+    <section class="section" id="tools">
+      <div class="section-head"><h2>Pick a tool</h2><p>Each one does a single job well.</p></div>
+      <div class="tiles">
+        <a class="tile" href="#stems"><div class="tile-ico"><svg class="i"><use href="#i-split"/></svg></div><h3>Stem Splitter</h3><p>Pull vocals, drums, bass, and the rest out of any song.</p><span class="btn btn-white btn-sm">Open</span></a>
+        <a class="tile" href="#slowed"><div class="tile-ico"><svg class="i"><use href="#i-wave"/></svg></div><h3>Slowed + Reverb</h3><p>The signature slowed sound, tuned and ready to post.</p><span class="btn btn-white btn-sm">Open</span></a>
+        <a class="tile" href="#download"><div class="tile-ico"><svg class="i"><use href="#i-down"/></svg></div><h3>YouTube Downloader</h3><p>Save any video as MP3 or MP4, then send it straight to the other tools.</p><span class="btn btn-white btn-sm">Open</span></a>
+        <a class="tile" href="#transcribe"><div class="tile-ico"><svg class="i"><use href="#i-mic"/></svg></div><h3>Transcribe</h3><p>Turn audio or a YouTube link into text, subtitles, and a summary.</p><span class="btn btn-white btn-sm">Open</span></a>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><h2>Three steps</h2><p>No account. No install.</p></div>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><h3>Drop a file</h3><p>Or paste a YouTube link.</p></div>
+        <div class="step"><div class="n">2</div><h3>Let it run</h3><p>Most tracks finish in a few minutes.</p></div>
+        <div class="step"><div class="n">3</div><h3>Download</h3><p>Grab each file on its own.</p></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<main data-view="upload" hidden>
+  <div class="wrap">
+    <div class="tool-head"><h1 id="u-title">Stem Splitter</h1><p id="u-sub"></p></div>
+
+    <div class="card" id="s-input">
+      <div class="drop">
+        <div class="drop-ico"><svg class="i"><use href="#i-note"/></svg></div>
+        <h3>Drop your audio here</h3>
+        <p class="hint">MP3 or WAV, up to 100 MB</p>
+        <button class="btn btn-sm" type="button" id="demo-browse">Browse files</button>
+      </div>
+      <div id="s-file" hidden>
+        <div class="chip"><svg class="i" style="width:18px;height:18px"><use href="#i-note"/></svg><span>frou-frou-a-new-kind-of-love.mp3</span><button type="button" aria-label="Remove file" id="demo-remove">&times;</button></div>
+        <label class="opt"><div><b id="u-opt">Split stems</b><small id="u-optd"></small></div><span class="switch"><input type="checkbox" checked><i></i></span></label>
+        <button class="btn btn-ink btn-block" type="button" id="demo-go">Process track</button>
+      </div>
+    </div>
+
+    <div class="card" id="s-busy" hidden><div class="busy"><b id="demo-stage">Uploading</b><div class="bar"><i id="demo-fill"></i></div><small>Keep this tab open. This can take a few minutes.</small></div></div>
+
+    <div class="card" id="s-done" hidden>
+      <div class="done-head"><div class="check"><svg class="i" style="width:18px;height:18px;stroke-width:2.4"><use href="#i-check"/></svg></div><h2>Your files are ready</h2></div>
+      <div id="demo-results"></div>
+      <button class="btn btn-ghost btn-block" type="button" id="demo-again" style="margin-top:14px">Process another track</button>
+    </div>
+
+    <div class="card" id="s-err" hidden>
+      <div class="err"><svg class="i"><use href="#i-alert"/></svg><span>That file type isn't supported. Try an MP3 or WAV.</span></div>
+      <button class="btn btn-ink btn-block" type="button" id="demo-retry" style="margin-top:14px">Try again</button>
+    </div>
+
+    <div class="mock">Mockup only, jump to a state:
+      <button data-state="empty">Empty</button><button data-state="file">File picked</button><button data-state="busy">Processing</button><button data-state="done">Results</button><button data-state="err">Error</button>
+    </div>
+
+    <div class="more"><p>More tools</p><div id="u-more"></div></div>
+  </div>
+</main>
+
+<main data-view="download" hidden>
+  <div class="wrap">
+    <div class="tool-head"><h1>YouTube Downloader</h1><p>Paste a link, pick a format, and save it. Then send it to Stems or Slowed in one tap.</p></div>
+    <div class="card stack">
+      <input class="field" type="url" placeholder="https://youtube.com/watch?v=..." aria-label="YouTube URL">
+      <div class="seg" style="margin-bottom:0"><button class="on" type="button">MP3 audio</button><button type="button">MP4 video</button></div>
+      <button class="btn btn-ink btn-block" type="button">Download</button>
+    </div>
+    <div class="more"><p>More tools</p><div><a class="btn btn-ghost btn-sm" href="#stems">Stem Splitter</a><a class="btn btn-ghost btn-sm" href="#slowed">Slowed + Reverb</a><a class="btn btn-ghost btn-sm" href="#transcribe">Transcribe</a></div></div>
+  </div>
+</main>
+
+<main data-view="transcribe" hidden>
+  <div class="wrap">
+    <div class="tool-head"><h1>Transcribe</h1><p>Turn any audio file or YouTube video into text, subtitles, and a summary.</p></div>
+    <div class="card">
+      <div class="seg"><button class="on" type="button">Upload file</button><button type="button">YouTube link</button></div>
+      <div class="drop">
+        <div class="drop-ico"><svg class="i"><use href="#i-mic"/></svg></div>
+        <h3>Drop your audio here</h3>
+        <p class="hint">MP3, WAV, M4A, OGG, or FLAC</p>
+        <button class="btn btn-sm" type="button">Browse files</button>
+      </div>
+      <button class="btn btn-ink btn-block" type="button" style="margin-top:14px">Transcribe</button>
+    </div>
+    <div class="card">
+      <div class="done-head"><div class="check"><svg class="i" style="width:18px;height:18px;stroke-width:2.4"><use href="#i-check"/></svg></div><h2>Transcript ready</h2></div>
+      <p class="label">Transcript</p>
+      <div class="transcript">Welcome back to the channel. Today we're breaking down how this beat was made, starting with the drum pattern and then the sample chop...</div>
+      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-ghost btn-sm" type="button">Download .txt</button><button class="btn btn-ghost btn-sm" type="button">Download .srt</button></div>
+      <div class="pro">
+        <div class="pro-top"><b>AI summary</b><span class="badge">Pro</span></div>
+        <p>A walkthrough of building a beat from a single sample, covering drums, chops, and the final mix.</p>
+        <div class="topics"><span>Drum programming</span><span>Sampling</span><span>Mixing</span></div>
+      </div>
+    </div>
+    <div class="more"><p>More tools</p><div><a class="btn btn-ghost btn-sm" href="#stems">Stem Splitter</a><a class="btn btn-ghost btn-sm" href="#slowed">Slowed + Reverb</a><a class="btn btn-ghost btn-sm" href="#download">YouTube Downloader</a></div></div>
+  </div>
+</main>
+
+<footer><div class="wrap"><span>&copy; 2026 AudionLabs. Design mockup, not connected to the backend.</span><nav><a href="#stems">Stems</a><a href="#slowed">Slowed</a><a href="#download">Download</a><a href="#transcribe">Transcribe</a></nav></div></footer>
+
+<script>
+(function(){
+  var VIEWS=["home","stems","slowed","download","transcribe"];
+  var COPY={
+    stems:{t:"Stem Splitter",s:"Pull vocals, drums, bass, and everything else out of any track.",o:"Split stems",d:"Vocals, drums, bass, and other",
+      r:[["Vocals","var(--vocals)"],["Drums","var(--drums)"],["Bass","var(--bass)"],["Other","var(--other)"]]},
+    slowed:{t:"Slowed + Reverb",s:"The signature slowed sound with a warm low-pass and a long reverb tail.",o:"Slowed + reverb",d:"Pitched down with a warm reverb tail",
+      r:[["Slowed + reverb mix","var(--accent)"]]}
+  };
+  var NAMES={stems:"Stem Splitter",slowed:"Slowed + Reverb",download:"YouTube Downloader",transcribe:"Transcribe"};
+  var $=function(id){return document.getElementById(id);};
+  var timer=null;
+
+  function bars(){
+    document.querySelectorAll(".bars").forEach(function(el){
+      var seed=+el.dataset.s, html="";
+      for(var k=0;k<72;k++){
+        seed=(seed*9301+49297)%233280;
+        var env=0.35+0.65*Math.abs(Math.sin((k+seed%7)/9));
+        var h=Math.round(12+(seed/233280)*88*env);
+        html+='<i style="height:'+h+'%;background:'+el.dataset.c+'"></i>';
+      }
+      el.innerHTML=html;
+    });
+  }
+
+  function setState(s){
+    clearInterval(timer);
+    $("s-input").hidden=!(s==="empty"||s==="file");
+    $("s-file").hidden=s!=="file";
+    $("s-busy").hidden=s!=="busy";
+    $("s-done").hidden=s!=="done";
+    $("s-err").hidden=s!=="err";
+    if(s==="busy"){
+      var p=0, stages=["Uploading","Separating audio","Finishing up"];
+      $("demo-fill").style.width="0%";
+      timer=setInterval(function(){
+        p+=4; $("demo-fill").style.width=Math.min(p,100)+"%";
+        $("demo-stage").textContent=stages[p<20?0:p<85?1:2];
+        if(p>=100){clearInterval(timer);setState("done");}
+      },140);
+    }
+  }
+
+  function moveInd(){
+    var a=document.querySelector(".nav-item.active"), ind=document.querySelector(".nav-ind");
+    if(!a||!ind)return;
+    ind.style.width=a.offsetWidth+"px"; ind.style.left=a.offsetLeft+"px";
+  }
+
+  function show(){
+    var v=(location.hash||"#home").slice(1);
+    if(v==="tools"){return;}
+    if(VIEWS.indexOf(v)<0)v="home";
+    var upload=(v==="stems"||v==="slowed");
+    document.querySelectorAll("[data-view]").forEach(function(el){
+      var n=el.getAttribute("data-view");
+      el.hidden=upload?n!=="upload":n!==v;
+    });
+    if(upload){
+      var c=COPY[v];
+      $("u-title").textContent=c.t; $("u-sub").textContent=c.s;
+      $("u-opt").textContent=c.o; $("u-optd").textContent=c.d;
+      $("demo-results").innerHTML=c.r.map(function(r){
+        return '<div class="res"><i class="dot" style="background:'+r[1]+'"></i><span>'+r[0]+'</span><small>WAV</small><button class="btn btn-ghost btn-sm" type="button">Download</button></div>';
+      }).join("");
+      $("u-more").innerHTML=Object.keys(NAMES).filter(function(k){return k!==v;}).map(function(k){
+        return '<a class="btn btn-ghost btn-sm" href="#'+k+'">'+NAMES[k]+'</a>';
+      }).join("");
+      setState("empty");
+    }
+    document.querySelectorAll("[data-nav]").forEach(function(a){
+      a.classList.toggle("active",a.getAttribute("data-nav")===v);
+    });
+    moveInd(); window.scrollTo(0,0);
+  }
+
+  $("demo-browse").onclick=function(){setState("file");};
+  $("demo-remove").onclick=function(){setState("empty");};
+  $("demo-go").onclick=function(){setState("busy");};
+  $("demo-again").onclick=function(){setState("empty");};
+  $("demo-retry").onclick=function(){setState("empty");};
+  document.querySelectorAll("[data-state]").forEach(function(b){b.onclick=function(){setState(b.dataset.state);};});
+  document.querySelectorAll(".seg").forEach(function(seg){
+    seg.querySelectorAll("button").forEach(function(b){b.onclick=function(){
+      seg.querySelectorAll("button").forEach(function(x){x.classList.remove("on");}); b.classList.add("on");
+    };});
+  });
+  window.addEventListener("hashchange",show);
+  window.addEventListener("resize",moveInd);
+  bars(); show();
+  if(document.fonts&&document.fonts.ready){document.fonts.ready.then(moveInd);}
+})();
+</script>
+</body>
+</html>

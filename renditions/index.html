@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AudionLabs — Professional Audio Tools for Creators</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ── Design System: Modern SaaS (Linear / Vercel / Stripe) ── */
+    :root {
+      --bg: #09090B;
+      --surface: #111113;
+      --surface-2: #18181B;
+      --surface-3: #1C1C20;
+      --border: rgba(255, 255, 255, 0.06);
+      --border-hover: rgba(255, 255, 255, 0.12);
+      --border-active: #6366F1;
+      --text: #FAFAFA;
+      --text-secondary: #A1A1AA;
+      --text-muted: #71717A;
+      --accent: #6366F1;
+      --accent-light: #818CF8;
+      --accent-glow: rgba(99, 102, 241, 0.15);
+      --accent-glow-strong: rgba(99, 102, 241, 0.25);
+      --success: #22C55E;
+      --cta: #F97316;
+      --cta-hover: #FB923C;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-pill: 999px;
+    }
+
+    /* ── Reset ── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    a { text-decoration: none; color: inherit; }
+
+    /* ── Subtle grid texture ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 64px 64px;
+    }
+
+    /* ── Gradient glow (top) ── */
+    .glow-top {
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 500px;
+      background: radial-gradient(ellipse, rgba(99,102,241,0.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── All content above grid ── */
+    nav, main, section, footer { position: relative; z-index: 1; }
+
+    /* ── Navbar ── */
+    #main-nav {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      width: max-content;
+      max-width: calc(100vw - 2rem);
+    }
+
+    .nav-pill {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      padding: 8px 8px 8px 20px;
+      background: rgba(17, 17, 19, 0.85);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      backdrop-filter: blur(24px) saturate(1.2);
+    }
+
+    .nav-wordmark {
+      font-size: 0.9rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      white-space: nowrap;
+      color: var(--text);
+    }
+
+    .nav-wordmark span {
+      color: var(--accent-light);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .nav-item {
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      border-radius: var(--radius-pill);
+      transition: color 0.2s, background 0.2s;
+      cursor: pointer;
+    }
+
+    .nav-item:hover {
+      color: var(--text-secondary);
+    }
+
+    .nav-item.active {
+      color: var(--text);
+      background: var(--accent-glow);
+    }
+
+    .nav-auth {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 4px;
+    }
+
+    .nav-signin {
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-radius: var(--radius-pill);
+      transition: color 0.2s;
+      cursor: pointer;
+    }
+
+    .nav-signin:hover { color: var(--text); }
+
+    .nav-join {
+      padding: 6px 16px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: white;
+      background: var(--accent);
+      border-radius: var(--radius-pill);
+      transition: background 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+
+    .nav-join:hover {
+      background: var(--accent-light);
+      box-shadow: 0 0 20px var(--accent-glow-strong);
+    }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      padding: 160px 24px 80px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent-light);
+      background: var(--accent-glow);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: var(--radius-pill);
+      margin-bottom: 24px;
+      letter-spacing: 0.02em;
+    }
+
+    .hero-badge svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      margin-bottom: 20px;
+      background: linear-gradient(180deg, #FAFAFA 30%, #71717A 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-sub {
+      font-size: 1.125rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      max-width: 540px;
+      margin: 0 auto 40px;
+    }
+
+    .hero-cta-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 28px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: white;
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-light);
+      box-shadow: 0 0 30px var(--accent-glow-strong);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 28px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: transparent;
+      border: 1px solid var(--border-hover);
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s, transform 0.15s;
+    }
+
+    .btn-secondary:hover {
+      color: var(--text);
+      border-color: rgba(255,255,255,0.25);
+      transform: translateY(-1px);
+    }
+
+    /* ── Tool Grid ── */
+    .tools-section {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 24px 100px;
+    }
+
+    .tools-section-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .tools-section-header h2 {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent-light);
+      margin-bottom: 8px;
+    }
+
+    .tools-section-header p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .tool-card {
+      display: flex;
+      flex-direction: column;
+      padding: 32px 28px;
+      background: var(--surface);
+      cursor: pointer;
+      transition: background 0.25s;
+    }
+
+    .tool-card:hover {
+      background: var(--surface-2);
+    }
+
+    .tool-icon {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      background: var(--accent-glow);
+      color: var(--accent-light);
+      margin-bottom: 20px;
+    }
+
+    .tool-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .tool-card h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .tool-card p {
+      font-size: 0.825rem;
+      line-height: 1.55;
+      color: var(--text-muted);
+      flex: 1;
+    }
+
+    .tool-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent-light);
+      transition: gap 0.2s;
+    }
+
+    .tool-card:hover .tool-cta {
+      gap: 8px;
+    }
+
+    /* ── Features / Social Proof ── */
+    .features {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 24px 100px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .feature-card {
+      padding: 32px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+    }
+
+    .feature-icon {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      background: var(--surface-2);
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .feature-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .feature-card h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .feature-card p {
+      font-size: 0.825rem;
+      line-height: 1.55;
+      color: var(--text-muted);
+    }
+
+    /* ── CTA Banner ── */
+    .cta-banner {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 24px 100px;
+    }
+
+    .cta-inner {
+      text-align: center;
+      padding: 64px 40px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-inner::before {
+      content: '';
+      position: absolute;
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 500px;
+      height: 300px;
+      background: radial-gradient(ellipse, rgba(99,102,241,0.08), transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta-inner h2 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+      position: relative;
+    }
+
+    .cta-inner p {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+      position: relative;
+    }
+
+    .cta-inner .btn-primary { position: relative; }
+
+    /* ── Footer ── */
+    footer {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-left {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .footer-links a {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover { color: var(--text-secondary); }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .tool-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .hero { padding: 140px 20px 60px; }
+      .hero h1 { font-size: 2rem; }
+      .hero-cta-row { flex-direction: column; }
+      .tool-grid { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr; }
+      .nav-auth { display: none; }
+      footer { flex-direction: column; gap: 16px; text-align: center; }
+    }
+
+    /* ── Reduced motion ── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Subtle top glow -->
+<div class="glow-top"></div>
+
+<!-- Navbar -->
+<nav id="main-nav">
+  <div class="nav-pill">
+    <a class="nav-wordmark" href="#">Audion<span>Labs</span></a>
+    <div class="nav-links">
+      <a class="nav-item active" href="#">Home</a>
+      <a class="nav-item" href="stems.html">Stems</a>
+      <a class="nav-item" href="#">Slowed</a>
+      <a class="nav-item" href="#">Download</a>
+      <a class="nav-item" href="#">Transcribe</a>
+    </div>
+    <div class="nav-auth">
+      <a class="nav-signin" href="#">Sign In</a>
+      <a class="nav-join" href="#">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-badge">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+    </svg>
+    AI-Powered Audio Processing
+  </div>
+  <h1>Professional audio tools,<br>built for creators</h1>
+  <p class="hero-sub">Split stems, slow tracks, download YouTube audio, and transcribe anything — all in one platform. No installs. No setup. Just results.</p>
+  <div class="hero-cta-row">
+    <a class="btn-primary" href="#">
+      Start Processing
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+    <a class="btn-secondary" href="#">Learn More</a>
+  </div>
+</section>
+
+<!-- Tool Grid -->
+<section class="tools-section">
+  <div class="tools-section-header">
+    <h2>Tools</h2>
+    <p>Everything you need to process audio, powered by AI</p>
+  </div>
+
+  <div class="tool-grid">
+
+    <a class="tool-card" href="stems.html">
+      <div class="tool-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="3" x2="12" y2="12"/>
+          <line x1="12" y1="12" x2="5" y2="21"/>
+          <line x1="12" y1="12" x2="19" y2="21"/>
+        </svg>
+      </div>
+      <h3>Stem Splitter</h3>
+      <p>Isolate vocals, drums, bass and other from any track using Demucs AI.</p>
+      <span class="tool-cta">Try Stem Splitter <span>&rarr;</span></span>
+    </a>
+
+    <a class="tool-card" href="#">
+      <div class="tool-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 12h2l3-7 4 14 4-10 3 3h4"/>
+        </svg>
+      </div>
+      <h3>Slowed + Reverb</h3>
+      <p>Warm 6kHz low-pass with reverb tail. The signature slowed aesthetic, perfected.</p>
+      <span class="tool-cta">Try Slowed + Reverb <span>&rarr;</span></span>
+    </a>
+
+    <a class="tool-card" href="#">
+      <div class="tool-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </div>
+      <h3>YouTube Downloader</h3>
+      <p>Download any YouTube video as MP3 or MP4, then process it directly.</p>
+      <span class="tool-cta">Try Downloader <span>&rarr;</span></span>
+    </a>
+
+    <a class="tool-card" href="#">
+      <div class="tool-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="22"/>
+          <line x1="8" y1="22" x2="16" y2="22"/>
+        </svg>
+      </div>
+      <h3>Transcribe</h3>
+      <p>Convert any audio or YouTube video to text with AI. Full transcripts, summaries, and SRT files.</p>
+      <span class="tool-cta">Try Transcribe <span>&rarr;</span></span>
+    </a>
+
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features">
+  <div class="features-grid">
+
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+      </div>
+      <h3>AI-Powered</h3>
+      <p>Demucs for stem separation, Whisper for transcription, Claude for intelligent summaries. Best-in-class models.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </div>
+      <h3>Instant Processing</h3>
+      <p>No downloads, no installs, no configuration. Upload a file and get results in minutes.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <h3>Private & Secure</h3>
+      <p>Your files are processed and deleted. We don't store, share, or train on your audio.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-banner">
+  <div class="cta-inner">
+    <h2>Ready to process your audio?</h2>
+    <p>Join thousands of creators using AudionLabs every day.</p>
+    <a class="btn-primary" href="#">
+      Get Started Free
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <span class="footer-left">&copy; 2026 AudionLabs</span>
+  <div class="footer-links">
+    <a href="#">Terms</a>
+    <a href="#">Privacy</a>
+    <a href="#">Contact</a>
+  </div>
+</footer>
+
+</body>
+</html>
