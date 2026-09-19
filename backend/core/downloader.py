@@ -1,12 +1,51 @@
+import os
 import sys
 import subprocess
 from pathlib import Path
+from typing import List
 
 from ..config import DOWNLOADS_DIR
 
 # Use venv python if available, fall back to sys.executable
 VENV_PYTHON = Path(__file__).resolve().parents[2] / ".venv" / "Scripts" / "python.exe"
 PYTHON = str(VENV_PYTHON) if VENV_PYTHON.exists() else sys.executable
+
+
+def network_args() -> List[str]:
+    """Extra yt-dlp arguments taken from the environment.
+
+    YouTube blocks most datacenter IP addresses with a "confirm you're not a bot"
+    wall. PO tokens do not lift that block. A residential proxy does, so the proxy
+    is configurable without a code change:
+
+        YTDLP_PROXY          for example http://user:pass@host:port
+        YTDLP_COOKIES_FILE   path to a Netscape cookies.txt, as a fallback
+    """
+    args: List[str] = []
+    proxy = os.getenv("YTDLP_PROXY", "").strip()
+    if proxy:
+        args += ["--proxy", proxy]
+    cookies = os.getenv("YTDLP_COOKIES_FILE", "").strip()
+    if cookies and Path(cookies).is_file():
+        args += ["--cookies", cookies]
+    return args
+
+
+def friendly_error(stderr: str) -> str:
+    """Turn yt-dlp's stderr into a message a visitor can act on."""
+    text = (stderr or "").strip()
+    low = text.lower()
+    if "not a bot" in low or "sign in to confirm" in low:
+        return ("YouTube is blocking requests from our server right now. "
+                "Save the audio another way, then upload the file instead.")
+    if "private video" in low or "video unavailable" in low or "has been removed" in low:
+        return "That video is private or unavailable."
+    if "unsupported url" in low or "is not a valid url" in low:
+        return "That link is not a supported video URL."
+    if "age" in low and "restricted" in low:
+        return "That video is age-restricted and cannot be fetched."
+    last = text.split("\n")[-1] if text else "Unknown error"
+    return f"Download failed: {last}"
 
 
 def download_media(url: str, format: str) -> Path:
@@ -25,6 +64,7 @@ def download_media(url: str, format: str) -> Path:
 
     cmd = [PYTHON, "-m", "yt_dlp", "--no-playlist", "--restrict-filenames",
            "--print", "after_move:filepath"]
+    cmd += network_args()
 
     if format == "mp3":
         cmd += [
@@ -46,8 +86,7 @@ def download_media(url: str, format: str) -> Path:
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
 
     if result.returncode != 0:
-        error_msg = result.stderr.strip().split("\n")[-1] if result.stderr else "Unknown error"
-        raise RuntimeError(f"yt-dlp failed: {error_msg}")
+        raise RuntimeError(friendly_error(result.stderr))
 
     # yt-dlp prints the final filepath to stdout via --print after_move:filepath
     filepath = result.stdout.strip().splitlines()[-1] if result.stdout.strip() else ""
