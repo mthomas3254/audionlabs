@@ -10,11 +10,12 @@
 
   // Pages shipped before v2 had no cache headers, so a returning visitor's browser can
   // serve the old HTML from its own cache. This script is always fetched fresh, so it
-  // can spot the old markup (no mobile tab bar) and refetch the page, once per session.
+  // can spot the old markup (no mobile tab bar) and refetch the page, once per path per session.
   if (!document.querySelector(".tabbar")) {
     try {
-      if (!window.sessionStorage.getItem("al-v2-refetch")) {
-        window.sessionStorage.setItem("al-v2-refetch", "1");
+      var refetchKey = "al-v2-refetch:" + page;
+      if (!window.sessionStorage.getItem(refetchKey)) {
+        window.sessionStorage.setItem(refetchKey, "1");
         window.location.reload();
         return;
       }
