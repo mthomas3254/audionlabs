@@ -59,7 +59,7 @@ Frontend renders download buttons
 | Method | Path | Purpose | Status |
 |--------|------|---------|--------|
 | POST | /process_audio | Stems + slowed+reverb | WORKING |
-| POST | /download | YouTube yt-dlp download | WORKING (Bug 14 fixed Sep 19, 2026) |
+| POST | /download | YouTube yt-dlp download | MOSTLY FAILING on Railway (Bug 14, IP refused) |
 | POST | /transcribe | Whisper + Claude AI | WORKING |
 | GET | /file?path= | Serve output files | WORKING |
 | GET | /health | Status check | WORKING |
@@ -175,7 +175,7 @@ Demucs model: htdemucs (not htdemucs_ft — speed vs quality tradeoff)
 | Landing page | ✅ DONE | 4 tool cards, aurora bg |
 | Stems tool | ✅ DONE | Demucs, all 4 stems |
 | Slowed+reverb tool | ✅ DONE | Settings locked |
-| YouTube downloader | ✅ DONE | Bug 14 fixed by rebuilding the image. Redeploy if it recurs |
+| YouTube downloader | ⚠️ PARTIAL | Tooling fixed. YouTube refuses the Railway IP. Needs proxy, cookies, or retirement |
 | AI Transcription | ✅ DONE | Whisper + Claude, free+Pro UI |
 | Railway deployment | ✅ DONE | Dockerfile, python:3.11-slim |
 | Custom domain | ✅ DONE | audionlabs.ai via Cloudflare |
@@ -240,29 +240,46 @@ Then paste via Railway Raw Editor only.
 PORT=8000 set in Railway Variables.
 **Status:** FIXED
 
-### Bug 14 — YouTube bot detection on Railway (FIXED Sep 19, 2026 — stale yt-dlp)
-**Symptom:** yt-dlp fails with "Sign in to confirm you're not a bot"
-**Root cause:** Railway datacenter IPs are flagged by YouTube's bot detection.
-YouTube treats requests from datacenter IPs differently than residential IPs.
-**Fix to try (in order):**
-1. Upgrade yt-dlp to latest in Dockerfile (RUN pip install --upgrade yt-dlp)
-2. Add android player client: --extractor-args "youtube:player_client=android,web"
-3. Add custom user-agent: --user-agent "Mozilla/5.0 (Linux; Android 10)"
-4. PO Token authentication (latest bypass — check yt-dlp GitHub issues)
-5. If all fail: Route downloads through residential proxy or use alternative approach
-**References:** https://github.com/yt-dlp/yt-dlp/issues (check latest bot detection issues)
-**Sep 19, 2026 resolution:** Reproduced on production that morning. After the v2 deploy rebuilt
-the Docker image, downloads worked again on Railway (verified: two videos, MP3 and MP4).
-**Real root cause:** the Dockerfile runs `pip install -U yt-dlp` and installs the bgutil PO
-Token provider at BUILD time. The running image was five months old, so yt-dlp had gone stale
-while YouTube kept changing. A rebuild pulls current versions. An earlier note in this file
-blamed the datacenter IP and said only a proxy could fix it. That was wrong.
-**If it breaks again:** redeploy first, which rebuilds the image. Only if a fresh build still
-hits the bot wall, set `YTDLP_PROXY` (residential proxy) or `YTDLP_COOKIES_FILE` in Railway
-Variables. downloader.py reads both and shows visitors a plain-language error meanwhile.
+### Bug 14 — YouTube bot detection on Railway (OPEN — tooling fixed, Railway IP refused)
+**Symptom:** yt-dlp fails with "Sign in to confirm you're not a bot". Intermittent per video.
+
+**What was actually broken in the image (FIXED Sep 19, 2026, commit b024af0):**
+The production trace showed `JS runtimes: none` and every PO token provider unavailable.
+- The image shipped Node 20. yt-dlp and bgutil 2.x both need Node >= 22, so both were
+  silently disabled. The Apr 4 "fix" therefore never ran at all.
+- The bgutil server was cloned at tag 1.2.2 while pip installed plugin 2.0.0.
+- yt-dlp was installed without its `default` group, so the EJS solver scripts were missing.
+- yt-dlp enables only Deno by default, so Node also has to be named with `--js-runtimes node`.
+Now: Node 22, server and plugin pinned to one `BGUTIL_VERSION`, `yt-dlp[default]`, and the
+build fails if Node < 22. Verified in the trace: `JS runtimes: node-22`, challenge provider
+`node`, and "Retrieved a gvs PO Token for web client".
+
+**What is still failing, with evidence (Sep 19, 2026):**
+With that toolchain fully working, 7 of 8 production downloads still failed. A diagnostic run
+asked for ten client types. YouTube answered LOGIN_REQUIRED to every one of them (web,
+web_safari, web_embedded, mweb, ios, android_vr, tv, tv_downgraded, visionos) on all 8
+requests. The identical command succeeds from a residential connection. Code, yt-dlp version,
+flags, runtime, and tokens are all eliminated, so the remaining variable is the Railway
+network address. One popular video still succeeds, and a fresh container briefly succeeded
+3 of 3, which fits IP reputation that varies by egress address.
+
+**Two wrong diagnoses were recorded here earlier on Sep 19 and are retracted:** "only a proxy
+can fix it" (said before the broken toolchain was found) and "it was just a stale yt-dlp".
+
+**Remaining options (owner decision, all already supported by downloader.py):**
+1. `YTDLP_PROXY` = a residential proxy. Most reliable. Paid, roughly a few dollars per GB.
+2. `YTDLP_COOKIES_FILE` = cookies from a logged-in account. Free, but the account can be
+   banned and cookies expire.
+3. Retire or hide the downloader. This also removes the AdSense policy conflict below.
+Third-party "YouTube to MP3" APIs exist, but they solve the same block with proxies and add
+cost, a dependency, and legal exposure.
+
+**Diagnosing next time:** `railway logs -p b369b5d5-59a9-425b-96ea-511f00a17231 -s audionlabs
+-e production -n 400`, then look for `[ytdlp]` lines. Set `YTDLP_PLAYER_CLIENTS=all` to log
+the status YouTube returns for every client type.
 **AdSense conflict:** Google publisher policy does not allow ads next to YouTube download
 tools. pages.py never injects ads on /youtube-downloader. Approval may still hinge on it.
-**Status:** FIXED — expect it to recur as the image ages. Redeploy monthly
+**Status:** OPEN — blocked on the owner choosing option 1, 2, or 3
 
 ---
 
@@ -306,6 +323,8 @@ restartPolicyType = "on_failure"
 | ADSENSE_SLOT | digits | Optional. Turns on the in-page ad unit. Without it only Auto ads work |
 | YTDLP_PROXY | http://user:pass@host:port | Optional. Residential proxy. The Bug 14 fix |
 | YTDLP_COOKIES_FILE | /path/cookies.txt | Optional fallback for Bug 14. Fragile |
+| YTDLP_JS_RUNTIME | node | Optional. JS runtime yt-dlp uses. Default node |
+| YTDLP_PLAYER_CLIENTS | all | Optional, diagnostics only. Logs YouTube's answer per client type |
 | SITE_URL | https://audionlabs.ai | Optional. Used in robots.txt and sitemap.xml |
 
 ### DNS (Cloudflare)
@@ -421,7 +440,7 @@ Cloudflare CNAME flattening solves this — audionlabs.ai works without www.
 ## 14. Next Session Goals
 1. AdSense: owner creates the account, then sets ADSENSE_CLIENT (and ADSENSE_SLOT) in Railway
    Variables. The site already serves the tag, the meta tag, /ads.txt, /privacy, and /terms
-2. Keep yt-dlp fresh: redeploy about monthly, or the downloader goes stale again (Bug 14)
+2. Bug 14: owner picks a residential proxy (YTDLP_PROXY), cookies, or retiring the downloader
 3. Create the hello@audionlabs.ai mailbox (Cloudflare Email Routing). Privacy and Terms cite it
 4. Rate limiting on all endpoints (slowapi or custom middleware)
 5. File size limit — 100MB max enforced in backend

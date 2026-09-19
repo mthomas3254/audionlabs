@@ -115,24 +115,20 @@ def test_urls_with_control_characters_are_rejected():
 
 # ---- Player clients: YouTube gates each client type differently per IP ----
 
-def test_player_clients_default_covers_several_client_types(monkeypatch):
+def test_player_clients_are_left_to_yt_dlp_by_default(monkeypatch):
     monkeypatch.delenv("YTDLP_PLAYER_CLIENTS", raising=False)
-    args = downloader.client_args()
-    assert args[0] == "--extractor-args"
-    assert args[1].startswith("youtube:player_client=default,")
-    for name in ("tv", "web_safari", "mweb", "android_vr"):
-        assert name in args[1].split("=")[1].split(",")
-
-
-def test_player_clients_can_be_overridden_or_disabled(monkeypatch):
-    monkeypatch.setenv("YTDLP_PLAYER_CLIENTS", "tv,mweb")
-    assert downloader.client_args() == ["--extractor-args", "youtube:player_client=tv,mweb"]
-    monkeypatch.setenv("YTDLP_PLAYER_CLIENTS", "off")
     assert downloader.client_args() == []
 
 
+def test_player_clients_can_be_set_for_diagnosis(monkeypatch):
+    monkeypatch.setenv("YTDLP_PLAYER_CLIENTS", "tv,mweb")
+    assert downloader.client_args() == ["--extractor-args", "youtube:player_client=tv,mweb"]
+    monkeypatch.setenv("YTDLP_PLAYER_CLIENTS", "all")
+    args = downloader.client_args()
+    for name in ("tv", "web_safari", "mweb", "android_vr", "ios"):
+        assert name in args[1].split("=")[1].split(",")
+
+
 def test_player_clients_reject_anything_but_client_names(monkeypatch):
-    monkeypatch.delenv("YTDLP_PLAYER_CLIENTS", raising=False)
-    default = downloader.client_args()
     monkeypatch.setenv("YTDLP_PLAYER_CLIENTS", "tv;po_token=x --exec evil")
-    assert downloader.client_args() == default
+    assert downloader.client_args() == []

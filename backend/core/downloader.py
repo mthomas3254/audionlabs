@@ -44,20 +44,21 @@ def runtime_args() -> List[str]:
     return ["--js-runtimes", runtime]
 
 
-# YouTube gates each client type differently depending on the requesting IP. Asking for
-# several lets yt-dlp use whichever one answers, and the verbose trace records the
-# playability status of each, which shows exactly what YouTube allows from this server.
-DEFAULT_PLAYER_CLIENTS = "default,tv,tv_simply,tv_downgraded,web_safari,web_embedded,mweb,android_vr,ios"
+# Diagnostic switch. YouTube gates each client type per requesting IP, and the verbose
+# trace logs the playability status of every client tried. On Sep 19, 2026 all ten
+# client types returned LOGIN_REQUIRED from Railway, so extra clients are NOT a fix and
+# only multiply requests. Leave unset in normal use. ALL_PLAYER_CLIENTS is for re-testing.
+ALL_PLAYER_CLIENTS = "default,tv,tv_simply,tv_downgraded,web_safari,web_embedded,mweb,android_vr,ios"
 _CLIENTS_RE = re.compile(r"^[a-z_]+(,[a-z_]+)*$")
 
 
 def client_args() -> List[str]:
-    """yt-dlp player client selection. Override with YTDLP_PLAYER_CLIENTS, or "off"."""
+    """Optional yt-dlp player client list from YTDLP_PLAYER_CLIENTS ("all" tries every type)."""
     value = os.getenv("YTDLP_PLAYER_CLIENTS", "").strip().lower()
-    if value == "off":
-        return []
+    if value == "all":
+        value = ALL_PLAYER_CLIENTS
     if not value or not _CLIENTS_RE.match(value):
-        value = DEFAULT_PLAYER_CLIENTS
+        return []
     return ["--extractor-args", f"youtube:player_client={value}"]
 
 

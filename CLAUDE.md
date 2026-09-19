@@ -34,7 +34,7 @@ DJs, remix artists, and producers. Four tools, one platform:
 | /privacy, /terms | privacy.html, terms.html | LIVE |
 | /ads.txt, /robots.txt, /sitemap.xml | backend/pages.py | LIVE (ads.txt only when ADSENSE_CLIENT is set) |
 | POST /process_audio | stems + slowed+reverb | WORKING |
-| POST /download | YouTube yt-dlp | WORKING (redeploy if it goes stale) |
+| POST /download | YouTube yt-dlp | MOSTLY FAILING on Railway (Bug 14, YouTube refuses the IP) |
 | POST /transcribe | Whisper + Claude API | WORKING |
 | GET /health | health check | WORKING |
 
@@ -52,7 +52,7 @@ DJs, remix artists, and producers. Four tools, one platform:
 - [x] Live stem mixer (mixer.js)
 - [x] AdSense plumbing, privacy, terms, ads.txt (waiting on publisher id)
 - [x] pytest suite (tests/)
-- [x] YouTube bot detection (Bug 14 — fixed Sep 19 by rebuilding the image with current yt-dlp)
+- [ ] **YouTube bot detection (Bug 14 — toolchain fixed Sep 19, but YouTube refuses the Railway IP)**
 - [ ] Rate limiting
 - [ ] File size limits (100MB)
 - [ ] File type validation
@@ -68,7 +68,7 @@ DJs, remix artists, and producers. Four tools, one platform:
 
 ## Next Session Priorities (in order)
 0. **AdSense** — owner creates the account, then set ADSENSE_CLIENT and ADSENSE_SLOT in Railway
-1. **Keep yt-dlp fresh** — redeploy about monthly. A stale image is what caused Bug 14
+1. **Bug 14** — owner decision: YTDLP_PROXY (residential proxy), YTDLP_COOKIES_FILE, or retire the downloader
 2. **Security hardening** — rate limiting, file size limits, file type validation, Cloudflare WAF
 3. **Analytics** — Google Analytics 4 on all pages
 4. **Email capture** — Mailchimp signup on landing page
@@ -86,8 +86,9 @@ DJs, remix artists, and producers. Four tools, one platform:
 
 ## Known Active Bugs
 See BLUEPRINT.md → Known Bugs section for full detail.
-- **Bug 14 (FIXED Sep 19):** yt-dlp in the old image was stale. Rebuild fixed it. Redeploy first if it recurs,
-  then fall back to YTDLP_PROXY
+- **Bug 14 (OPEN):** image toolchain was broken (Node 20, mismatched bgutil, no EJS) and is now fixed.
+  YouTube still returns LOGIN_REQUIRED to all ten client types from the Railway IP. See BLUEPRINT.md.
+  Read `[ytdlp]` lines in Railway logs before theorizing
 - **Bug 1 (FIXED):** torchaudio torchcodec save error — sitecustomize.py patch
 - **Bug 2 (FIXED):** sys.executable wrong Python on Windows — VENV_PYTHON fix
 - **Bug 11 (FIXED):** Railway port mismatch — hardcoded 8000
