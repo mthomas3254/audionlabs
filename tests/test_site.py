@@ -47,21 +47,33 @@ def test_no_ads_anywhere_until_configured(client):
     assert client.get("/ads.txt").status_code == 404
 
 
-def test_ads_appear_on_tool_pages_when_configured(client, monkeypatch):
+@pytest.mark.parametrize("path", [p[0] for p in pages.PAGES])
+def test_ads_appear_on_every_page_when_configured(client, monkeypatch, path):
     monkeypatch.setenv("ADSENSE_CLIENT", CLIENT)
     monkeypatch.setenv("ADSENSE_SLOT", SLOT)
-    for path in ["/", "/stems", "/slowed-reverb", "/transcribe"]:
-        html = client.get(path).text
-        assert f"adsbygoogle.js?client={CLIENT}" in html
-        assert f'data-ad-slot="{SLOT}"' in html
-        assert f'<meta name="google-adsense-account" content="{CLIENT}">' in html
+    monkeypatch.delenv("ADSENSE_EXCLUDE", raising=False)
+    html = client.get(path).text
+    assert html.count(f"adsbygoogle.js?client={CLIENT}") == 1, "head script must load exactly once"
+    assert f'<meta name="google-adsense-account" content="{CLIENT}">' in html
+    assert f'data-ad-slot="{SLOT}"' in html, f"no ad unit on {path}"
+    # every unit pushes itself exactly once
+    assert html.count("<ins class=\"adsbygoogle\"") == html.count("adsbygoogle || []).push({})")
 
 
-def test_ads_never_load_on_downloader_or_legal_pages(client, monkeypatch):
+def test_landing_page_carries_two_ad_units(client, monkeypatch):
     monkeypatch.setenv("ADSENSE_CLIENT", CLIENT)
     monkeypatch.setenv("ADSENSE_SLOT", SLOT)
-    for path in ["/youtube-downloader", "/privacy", "/terms"]:
-        assert "adsbygoogle" not in client.get(path).text
+    assert client.get("/").text.count('<ins class="adsbygoogle"') == 2
+
+
+def test_owner_can_switch_ads_off_for_chosen_pages(client, monkeypatch):
+    monkeypatch.setenv("ADSENSE_CLIENT", CLIENT)
+    monkeypatch.setenv("ADSENSE_SLOT", SLOT)
+    monkeypatch.setenv("ADSENSE_EXCLUDE", "/youtube-downloader, /terms")
+    assert "adsbygoogle" not in client.get("/youtube-downloader").text
+    assert "adsbygoogle" not in client.get("/terms").text
+    assert "adsbygoogle" in client.get("/stems").text
+    assert "adsbygoogle" in client.get("/privacy").text
 
 
 def test_client_without_slot_adds_head_script_only(client, monkeypatch):

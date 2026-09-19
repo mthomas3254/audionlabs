@@ -278,7 +278,8 @@ cost, a dependency, and legal exposure.
 -e production -n 400`, then look for `[ytdlp]` lines. Set `YTDLP_PLAYER_CLIENTS=all` to log
 the status YouTube returns for every client type.
 **AdSense conflict:** Google publisher policy does not allow ads next to YouTube download
-tools. pages.py never injects ads on /youtube-downloader. Approval may still hinge on it.
+tools. The owner chose ads on every page, including /youtube-downloader. If AdSense sends a
+policy notice or rejects the site, set `ADSENSE_EXCLUDE=/youtube-downloader` in Railway.
 **Status:** OPEN — blocked on the owner choosing option 1, 2, or 3
 
 ---
@@ -320,7 +321,8 @@ restartPolicyType = "on_failure"
 | PORT | 8000 | Must match Dockerfile CMD |
 | ANTHROPIC_API_KEY | sk-ant-... | Set in Railway Variables tab |
 | ADSENSE_CLIENT | ca-pub-XXXXXXXXXXXXXXXX | Optional. Turns on the AdSense head tag, meta tag, and /ads.txt |
-| ADSENSE_SLOT | digits | Optional. Turns on the in-page ad unit. Without it only Auto ads work |
+| ADSENSE_SLOT | digits | Optional. Turns on the in-page ad units. Without it only Auto ads work |
+| ADSENSE_EXCLUDE | /youtube-downloader | Optional. Comma-separated paths that must not carry ads |
 | YTDLP_PROXY | http://user:pass@host:port | Optional. Residential proxy. The Bug 14 fix |
 | YTDLP_COOKIES_FILE | /path/cookies.txt | Optional fallback for Bug 14. Fragile |
 | YTDLP_JS_RUNTIME | node | Optional. JS runtime yt-dlp uses. Default node |
@@ -470,7 +472,8 @@ Cloudflare CNAME flattening solves this — audionlabs.ai works without www.
   encoder, handoff storage).
 - **`backend/pages.py`:** assembles pages from `static/partials/` (head, sprite, nav, footer),
   stamps asset URLs with a version for Cloudflare cache-busting, and injects AdSense when the
-  env vars are set. Ads never load on /youtube-downloader, /privacy, or /terms.
+  env vars are set. Ads load on EVERY page (owner decision, Sep 2026). `ADSENSE_EXCLUDE`
+  switches chosen paths off without a code change.
 - **New routes:** /privacy, /terms, /ads.txt, /robots.txt, /sitemap.xml.
 - **Stale-page guard:** pre-v2 pages had no cache headers, so browsers can serve old HTML from
   cache. app.js (always fetched fresh) detects the old markup and refetches the page once.

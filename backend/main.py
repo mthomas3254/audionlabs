@@ -68,7 +68,7 @@ async def no_cache_static(request: Request, call_next):
 
 def _register_page(path: str, filename: str, active: str, ads: bool) -> None:
     async def page():
-        return pages.render_page(filename, active=active, ads=ads)
+        return pages.render_page(filename, active=active, ads=pages.ads_allowed(path, ads))
 
     page.__name__ = "page_" + (filename.replace("-", "_").replace(".html", ""))
     app.get(path, include_in_schema=False)(page)

@@ -10,6 +10,8 @@ change in the hosting dashboard takes effect without a code change:
     ADSENSE_CLIENT   publisher id, for example ca-pub-1234567890123456
     ADSENSE_SLOT     ad unit id, digits only. Optional. Without it only the
                      head script is added, which is enough for Auto ads.
+    ADSENSE_EXCLUDE  comma-separated paths that must not carry ads, for example
+                     "/youtube-downloader". Optional. Empty means every page.
 """
 import os
 import re
@@ -23,15 +25,17 @@ PARTIALS_DIR = STATIC_DIR / "partials"
 SITE_URL = os.getenv("SITE_URL", "https://audionlabs.ai").rstrip("/")
 
 # Public pages, in sitemap order: (path, html file, nav key, ads allowed)
-# Ads never load on the downloader page or on the legal pages.
+# The owner asked for ads on every page (Sep 2026). Google's publisher policies do not
+# allow ads next to YouTube download tools, so /youtube-downloader is the page most likely
+# to draw a policy notice. ADSENSE_EXCLUDE switches any page off without a code change.
 PAGES = [
     ("/", "index.html", "home", True),
     ("/slowed-reverb", "slowed-reverb.html", "slowed", True),
     ("/stems", "stems.html", "stems", True),
     ("/transcribe", "transcribe.html", "transcribe", True),
-    ("/youtube-downloader", "youtube-downloader.html", "download", False),
-    ("/privacy", "privacy.html", "", False),
-    ("/terms", "terms.html", "", False),
+    ("/youtube-downloader", "youtube-downloader.html", "download", True),
+    ("/privacy", "privacy.html", "", True),
+    ("/terms", "terms.html", "", True),
 ]
 
 _CLIENT_RE = re.compile(r"^ca-pub-\d{10,20}$")
@@ -47,6 +51,16 @@ def adsense_client() -> str:
 def adsense_slot() -> str:
     value = os.getenv("ADSENSE_SLOT", "").strip()
     return value if _SLOT_RE.match(value) else ""
+
+
+def excluded_paths() -> set:
+    """Paths the owner has switched ads off for, from ADSENSE_EXCLUDE."""
+    raw = os.getenv("ADSENSE_EXCLUDE", "")
+    return {"/" + part.strip().strip("/") for part in raw.split(",") if part.strip()}
+
+
+def ads_allowed(path: str, default: bool = True) -> bool:
+    return default and ("/" + path.strip("/")) not in excluded_paths()
 
 
 def asset_version() -> str:

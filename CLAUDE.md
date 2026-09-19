@@ -104,7 +104,8 @@ See BLUEPRINT.md → Known Bugs section for full detail.
 - sitecustomize.py patch must be in Docker image AND local venv
 - NEVER rename an element id that app.js or studio.js looks up (tests/test_site.py enforces this)
 - Pages use placeholders filled by backend/pages.py. Load them through the app, not as files
-- NEVER inject ads on /youtube-downloader (Google publisher policy)
+- Ads load on every page by owner decision. /youtube-downloader is the policy risk. The off switch
+  is ADSENSE_EXCLUDE in Railway Variables, not a code change
 - Run the tests before every push. Master auto-deploys
 
 ## Go-To-Market (parallel to dev)
