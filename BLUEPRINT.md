@@ -434,8 +434,9 @@ Cloudflare CNAME flattening solves this — audionlabs.ai works without www.
 | Deploy S3 | Mar 16 | PORT fix (hardcoded 8000) | 4a06420 |
 | Deploy S4 | Mar 16 | LIVE — health check passed, audionlabs.ai connected | — |
 | Docs | Apr 4 | Full BLUEPRINT + CLAUDE.md cleanup and status update | — |
-| Bug 14 try | Apr 4 | PO Token provider (bgutil). Did not fix the IP block | 6e21f93 |
-| Revamp v2 | Sep 19 | Light pill UI on all pages, live Slowed+Reverb studio, live stem mixer, AdSense plumbing, privacy/terms, tests. Rebuild also fixed Bug 14 | see git log |
+| Bug 14 try | Apr 4 | PO Token provider (bgutil). Never actually ran: Node 20 was too old for it | 6e21f93 |
+| Revamp v2 | Sep 19 | Light pill UI on all pages, live Slowed+Reverb studio, live stem mixer, AdSense plumbing, privacy/terms, tests | see git log |
+| Bug 14 dig | Sep 19 | Found and fixed the broken yt-dlp toolchain (Node 22, bgutil 2.0.0, EJS). Proved YouTube still refuses the Railway IP on all client types | b024af0, a4cb954 |
 
 ## 14. Next Session Goals
 1. AdSense: owner creates the account, then sets ADSENSE_CLIENT (and ADSENSE_SLOT) in Railway
