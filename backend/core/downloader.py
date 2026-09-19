@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import subprocess
 from pathlib import Path
@@ -29,6 +30,22 @@ def network_args() -> List[str]:
     if cookies and Path(cookies).is_file():
         args += ["--cookies", cookies]
     return args
+
+
+_TRACE_RE = re.compile(
+    r"yt-dlp version|Python |exe versions|JS runtime|JavaScript|Optional libraries|Plugin|"
+    r"\[pot|\[youtube\]|\[jsc|client|WARNING|ERROR|Proxy map|Request Handlers", re.I)
+
+
+def _log_trace(url: str, returncode: int, stderr: str) -> None:
+    """Write the informative lines of yt-dlp's verbose output to the server log.
+
+    Visitors see friendly_error(). This keeps the real cause readable in Railway logs.
+    """
+    lines = [ln for ln in (stderr or "").splitlines() if _TRACE_RE.search(ln)]
+    print(f"[ytdlp] exit={returncode} url={url}", file=sys.stderr, flush=True)
+    for ln in lines[-80:]:
+        print(f"[ytdlp] {ln[:400]}", file=sys.stderr, flush=True)
 
 
 def friendly_error(stderr: str) -> str:
@@ -62,7 +79,8 @@ def download_media(url: str, format: str) -> Path:
 
     output_template = str(DOWNLOADS_DIR / "%(title)s.%(ext)s")
 
-    cmd = [PYTHON, "-m", "yt_dlp", "--no-playlist", "--restrict-filenames",
+    # --verbose only adds detail to stderr, which is logged below. It does not change behavior.
+    cmd = [PYTHON, "-m", "yt_dlp", "--no-playlist", "--restrict-filenames", "--verbose",
            "--print", "after_move:filepath"]
     cmd += network_args()
 
@@ -84,6 +102,7 @@ def download_media(url: str, format: str) -> Path:
         ]
 
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+    _log_trace(url, result.returncode, result.stderr)
 
     if result.returncode != 0:
         raise RuntimeError(friendly_error(result.stderr))
