@@ -59,7 +59,7 @@ Frontend renders download buttons
 | Method | Path | Purpose | Status |
 |--------|------|---------|--------|
 | POST | /process_audio | Stems + slowed+reverb | WORKING |
-| POST | /download | YouTube yt-dlp download | BROKEN (Bug 14) |
+| POST | /download | YouTube yt-dlp download | WORKING (Bug 14 fixed Sep 19, 2026) |
 | POST | /transcribe | Whisper + Claude AI | WORKING |
 | GET | /file?path= | Serve output files | WORKING |
 | GET | /health | Status check | WORKING |
@@ -175,7 +175,7 @@ Demucs model: htdemucs (not htdemucs_ft — speed vs quality tradeoff)
 | Landing page | ✅ DONE | 4 tool cards, aurora bg |
 | Stems tool | ✅ DONE | Demucs, all 4 stems |
 | Slowed+reverb tool | ✅ DONE | Settings locked |
-| YouTube downloader | ⚠️ BROKEN | Bug 14 — bot detection on Railway |
+| YouTube downloader | ✅ DONE | Bug 14 fixed by rebuilding the image. Redeploy if it recurs |
 | AI Transcription | ✅ DONE | Whisper + Claude, free+Pro UI |
 | Railway deployment | ✅ DONE | Dockerfile, python:3.11-slim |
 | Custom domain | ✅ DONE | audionlabs.ai via Cloudflare |
@@ -240,7 +240,7 @@ Then paste via Railway Raw Editor only.
 PORT=8000 set in Railway Variables.
 **Status:** FIXED
 
-### Bug 14 — YouTube bot detection on Railway (OPEN — NEEDS A PROXY, NOT CODE)
+### Bug 14 — YouTube bot detection on Railway (FIXED Sep 19, 2026 — stale yt-dlp)
 **Symptom:** yt-dlp fails with "Sign in to confirm you're not a bot"
 **Root cause:** Railway datacenter IPs are flagged by YouTube's bot detection.
 YouTube treats requests from datacenter IPs differently than residential IPs.
@@ -251,15 +251,18 @@ YouTube treats requests from datacenter IPs differently than residential IPs.
 4. PO Token authentication (latest bypass — check yt-dlp GitHub issues)
 5. If all fail: Route downloads through residential proxy or use alternative approach
 **References:** https://github.com/yt-dlp/yt-dlp/issues (check latest bot detection issues)
-**Sep 19, 2026 findings:** Reproduced on production. The Apr 4 PO Token (bgutil) fix did
-NOT work, because the block is on the Railway datacenter IP and tokens do not change the IP.
-Downloads work from a residential IP (verified locally in 3s). downloader.py now reads
-`YTDLP_PROXY` and `YTDLP_COOKIES_FILE` from the environment and returns a plain-language
-error when the bot wall appears. Setting `YTDLP_PROXY` to a residential proxy in Railway
-Variables is the fix. No code change needed after that.
+**Sep 19, 2026 resolution:** Reproduced on production that morning. After the v2 deploy rebuilt
+the Docker image, downloads worked again on Railway (verified: two videos, MP3 and MP4).
+**Real root cause:** the Dockerfile runs `pip install -U yt-dlp` and installs the bgutil PO
+Token provider at BUILD time. The running image was five months old, so yt-dlp had gone stale
+while YouTube kept changing. A rebuild pulls current versions. An earlier note in this file
+blamed the datacenter IP and said only a proxy could fix it. That was wrong.
+**If it breaks again:** redeploy first, which rebuilds the image. Only if a fresh build still
+hits the bot wall, set `YTDLP_PROXY` (residential proxy) or `YTDLP_COOKIES_FILE` in Railway
+Variables. downloader.py reads both and shows visitors a plain-language error meanwhile.
 **AdSense conflict:** Google publisher policy does not allow ads next to YouTube download
 tools. pages.py never injects ads on /youtube-downloader. Approval may still hinge on it.
-**Status:** OPEN — blocked on a proxy purchase decision
+**Status:** FIXED — expect it to recur as the image ages. Redeploy monthly
 
 ---
 
@@ -413,12 +416,12 @@ Cloudflare CNAME flattening solves this — audionlabs.ai works without www.
 | Deploy S4 | Mar 16 | LIVE — health check passed, audionlabs.ai connected | — |
 | Docs | Apr 4 | Full BLUEPRINT + CLAUDE.md cleanup and status update | — |
 | Bug 14 try | Apr 4 | PO Token provider (bgutil). Did not fix the IP block | 6e21f93 |
-| Revamp v2 | Sep 19 | Light pill UI on all pages, live Slowed+Reverb studio, live stem mixer, AdSense plumbing, privacy/terms, tests | see git log |
+| Revamp v2 | Sep 19 | Light pill UI on all pages, live Slowed+Reverb studio, live stem mixer, AdSense plumbing, privacy/terms, tests. Rebuild also fixed Bug 14 | see git log |
 
 ## 14. Next Session Goals
 1. AdSense: owner creates the account, then sets ADSENSE_CLIENT (and ADSENSE_SLOT) in Railway
    Variables. The site already serves the tag, the meta tag, /ads.txt, /privacy, and /terms
-2. Bug 14: decide on a residential proxy, then set YTDLP_PROXY. Or retire the downloader
+2. Keep yt-dlp fresh: redeploy about monthly, or the downloader goes stale again (Bug 14)
 3. Create the hello@audionlabs.ai mailbox (Cloudflare Email Routing). Privacy and Terms cite it
 4. Rate limiting on all endpoints (slowapi or custom middleware)
 5. File size limit — 100MB max enforced in backend
@@ -449,6 +452,8 @@ Cloudflare CNAME flattening solves this — audionlabs.ai works without www.
   stamps asset URLs with a version for Cloudflare cache-busting, and injects AdSense when the
   env vars are set. Ads never load on /youtube-downloader, /privacy, or /terms.
 - **New routes:** /privacy, /terms, /ads.txt, /robots.txt, /sitemap.xml.
+- **Stale-page guard:** pre-v2 pages had no cache headers, so browsers can serve old HTML from
+  cache. app.js (always fetched fresh) detects the old markup and refetches the page once.
 - **Fixed:** empty file bar showing before upload (an id rule beat the `hidden` attribute),
   unstyled Browse button on Transcribe, dead Sign In / Join links (removed until auth exists).
 
