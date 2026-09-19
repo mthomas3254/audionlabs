@@ -44,6 +44,23 @@ def runtime_args() -> List[str]:
     return ["--js-runtimes", runtime]
 
 
+# YouTube gates each client type differently depending on the requesting IP. Asking for
+# several lets yt-dlp use whichever one answers, and the verbose trace records the
+# playability status of each, which shows exactly what YouTube allows from this server.
+DEFAULT_PLAYER_CLIENTS = "default,tv,tv_simply,tv_downgraded,web_safari,web_embedded,mweb,android_vr,ios"
+_CLIENTS_RE = re.compile(r"^[a-z_]+(,[a-z_]+)*$")
+
+
+def client_args() -> List[str]:
+    """yt-dlp player client selection. Override with YTDLP_PLAYER_CLIENTS, or "off"."""
+    value = os.getenv("YTDLP_PLAYER_CLIENTS", "").strip().lower()
+    if value == "off":
+        return []
+    if not value or not _CLIENTS_RE.match(value):
+        value = DEFAULT_PLAYER_CLIENTS
+    return ["--extractor-args", f"youtube:player_client={value}"]
+
+
 # Lines of the verbose trace worth keeping. "Proxy map" is deliberately absent,
 # because yt-dlp prints the proxy URL there, credentials included.
 _TRACE_RE = re.compile(
@@ -110,6 +127,7 @@ def download_media(url: str, format: str) -> Path:
     cmd = [PYTHON, "-m", "yt_dlp", "--no-playlist", "--restrict-filenames", "--verbose",
            "--print", "after_move:filepath"]
     cmd += runtime_args()
+    cmd += client_args()
     cmd += network_args()
 
     if format == "mp3":
