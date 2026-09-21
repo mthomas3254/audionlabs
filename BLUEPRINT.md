@@ -42,7 +42,8 @@ User uploads file / pastes YouTube URL
         ↓
 FastAPI receives request (POST /process_audio or /download or /transcribe)
         ↓
-File saved to uploads/<uuid>/
+File saved to uploads/<uuid>/, job queued, 202 {job_id} returned AT ONCE
+        ↓  (worker thread; the page polls GET /jobs/{id} every 2s)
         ↓
 Subprocess: Demucs → separated/htdemucs/<uuid>/   (if stems requested)
 Subprocess: FFmpeg → slowed_outputs/<uuid>/        (if slowed+reverb requested)
@@ -58,9 +59,10 @@ Frontend renders download buttons
 ### API Endpoints
 | Method | Path | Purpose | Status |
 |--------|------|---------|--------|
-| POST | /process_audio | Stems + slowed+reverb | WORKING |
+| POST | /process_audio | Queues stems + slowed+reverb, returns 202 {job_id} | WORKING |
+| GET | /jobs/{id} | Job status, stage, result, or error | WORKING |
 | POST | /download | YouTube yt-dlp download | MOSTLY FAILING on Railway (Bug 14, IP refused) |
-| POST | /transcribe | Whisper + Claude AI | WORKING |
+| POST | /transcribe | Queues Whisper + Claude, returns 202 {job_id} | WORKING |
 | GET | /file?path= | Serve output files | WORKING |
 | GET | /health | Status check | WORKING |
 
@@ -93,6 +95,7 @@ audionlabs/
 │   ├── __init__.py
 │   ├── main.py                  # FastAPI app, all routes, lazy imports
 │   ├── pages.py                 # Page assembly: partials, cache-busting, AdSense injection
+│   ├── jobs.py                  # Background job store (Demucs/Whisper run off the request)
 │   ├── config.py                # Paths, env vars, ensure_dirs()
 │   ├── core/
 │   │   ├── __init__.py
@@ -282,6 +285,25 @@ tools. The owner chose ads on every page, including /youtube-downloader. If AdSe
 policy notice or rejects the site, set `ADSENSE_EXCLUDE=/youtube-downloader` in Railway.
 **Status:** OPEN — blocked on the owner choosing option 1, 2, or 3
 
+### Bug 15 — Cloudflare 524 on stem splits, site frozen during a split (FIXED Sep 21, 2026)
+**Symptom:** "A timeout occurred, error code 524" after a stem split. A second 524 on a plain
+page load three minutes later.
+**Evidence:** Railway HTTP log: `POST /process_audio` status 499 after 124,988 ms, "client has
+closed the request before the server could send a response". The client was Cloudflare.
+**Root causes (two):**
+1. Cloudflare's proxy closes any request that gets no response within 100 seconds. Demucs on
+   Railway's CPU takes minutes for a full song, so every real split timed out.
+2. `process_audio` and `transcribe` were `async def` handlers that called Demucs and Whisper
+   synchronously. That blocked uvicorn's event loop, so NO request was served by anyone until
+   the job finished. That is why an unrelated page load also returned 524.
+**Fix:** backend/jobs.py. Uploads are saved, the work is queued on a worker thread, and the
+endpoint returns 202 with a job id at once. The page polls GET /jobs/{id} every 2 seconds and
+shows the server's stage. Verified locally: health and page loads answered in ~5 ms while a
+split ran. Verified on production with a full-length song (see Session Log).
+**Why other sites are faster:** they run Demucs on GPUs, where a song separates in seconds.
+Railway is CPU-only. See Section 16 for the options.
+**Status:** FIXED
+
 ---
 
 ## 8. Deployment Configuration
@@ -328,6 +350,7 @@ restartPolicyType = "on_failure"
 | YTDLP_JS_RUNTIME | node | Optional. JS runtime yt-dlp uses. Default node |
 | YTDLP_PLAYER_CLIENTS | all | Optional, diagnostics only. Logs YouTube's answer per client type |
 | SITE_URL | https://audionlabs.ai | Optional. Used in robots.txt and sitemap.xml |
+| JOB_WORKERS | 1 | Optional. Concurrent background jobs. Raise only with more CPU |
 
 ### DNS (Cloudflare)
 - audionlabs.ai → CNAME → Railway (Proxied, orange cloud)
@@ -366,6 +389,13 @@ restartPolicyType = "on_failure"
 **Lazy imports in main.py:** Heavy imports (torch, demucs, whisper) are NOT at
 module level. They are imported inside each endpoint function. This ensures FastAPI
 starts in <1 second and passes Railway's health check immediately.
+
+**Background jobs (Sep 21, 2026):** Demucs and Whisper run on a worker thread via
+backend/jobs.py. The upload endpoint returns a job id in milliseconds and the page polls.
+Two reasons, both proven in production (Bug 15): Cloudflare drops any request over 100s
+with a 524, and calling blocking work from an `async def` handler froze uvicorn's event
+loop, so the whole site was down for every visitor while one split ran. JOB_WORKERS
+(default 1) caps concurrent jobs, since Demucs saturates the CPU anyway.
 
 **Subprocess isolation:** Demucs, FFmpeg, and yt-dlp all run as CLI subprocesses.
 This avoids memory leaks, model loading issues, and allows clean load/unload.
@@ -438,6 +468,7 @@ Cloudflare CNAME flattening solves this — audionlabs.ai works without www.
 | Docs | Apr 4 | Full BLUEPRINT + CLAUDE.md cleanup and status update | — |
 | Bug 14 try | Apr 4 | PO Token provider (bgutil). Never actually ran: Node 20 was too old for it | 6e21f93 |
 | Revamp v2 | Sep 19 | Light pill UI on all pages, live Slowed+Reverb studio, live stem mixer, AdSense plumbing, privacy/terms, tests | see git log |
+| Bug 15 | Sep 21 | Background job queue for stems and transcription. Fixes Cloudflare 524 and the frozen site during a split | see git log |
 | Bug 14 dig | Sep 19 | Found and fixed the broken yt-dlp toolchain (Node 22, bgutil 2.0.0, EJS). Proved YouTube still refuses the Railway IP on all client types | b024af0, a4cb954 |
 
 ## 14. Next Session Goals
@@ -497,3 +528,23 @@ Browser checks done for this release: studio playback rate, presets, seek, loop,
 and peak level, low-pass and bass measurements; full upload to Demucs to mixer flow; mute, solo,
 shortcuts, mix export peak, studio handoff; transcription; local YouTube download; no horizontal
 overflow at 375px on all seven pages.
+
+---
+
+## 16. Why splits are slow here and fast elsewhere
+
+Sites like vocalremover.org separate a song in well under a minute because Demucs runs on a
+GPU. AudionLabs runs it on Railway's shared CPU, where the same model takes several minutes
+for a full-length song, and one job at a time. Nothing in the code makes it slow; the
+hardware does. Options, roughly in order of cost:
+
+1. **Stay on CPU, hide the wait.** Done: the job queue shows progress and the site stays up.
+2. **Faster CPU model.** Demucs `htdemucs` is the quality pick. `mdx_extra_q` is several times
+   faster on CPU with a noticeable quality drop. Not recommended for the product's pitch.
+3. **GPU per job.** Send the split to a serverless GPU (Replicate, Modal, RunPod, Beam) and
+   keep the web app on Railway. Typical cost is a few cents per song, billed per second, and
+   a song finishes in about 10 to 30 seconds. This is how the fast sites do it. Needs an
+   account and a small adapter in demucs_engine.py that uploads the file and polls the result.
+4. **GPU host for the whole app.** Simpler wiring, but a GPU box costs money around the clock.
+
+Recommended next step when there is traffic: option 3.

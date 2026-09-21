@@ -33,9 +33,10 @@ DJs, remix artists, and producers. Four tools, one platform:
 | /transcribe | transcribe.html | LIVE |
 | /privacy, /terms | privacy.html, terms.html | LIVE |
 | /ads.txt, /robots.txt, /sitemap.xml | backend/pages.py | LIVE (ads.txt only when ADSENSE_CLIENT is set) |
-| POST /process_audio | stems + slowed+reverb | WORKING |
+| POST /process_audio | queues stems + slowed, returns 202 job_id | WORKING |
+| GET /jobs/{id} | job status / result | WORKING |
 | POST /download | YouTube yt-dlp | MOSTLY FAILING on Railway (Bug 14, YouTube refuses the IP) |
-| POST /transcribe | Whisper + Claude API | WORKING |
+| POST /transcribe | queues Whisper + Claude, returns 202 job_id | WORKING |
 | GET /health | health check | WORKING |
 
 ## Current Status — Feature Checklist
@@ -86,6 +87,8 @@ DJs, remix artists, and producers. Four tools, one platform:
 
 ## Known Active Bugs
 See BLUEPRINT.md → Known Bugs section for full detail.
+- **Bug 15 (FIXED Sep 21):** Cloudflare 524 on splits and a frozen site during a split. Long work now runs
+  as background jobs (backend/jobs.py). Never call Demucs or Whisper from a request handler again
 - **Bug 14 (OPEN):** image toolchain was broken (Node 20, mismatched bgutil, no EJS) and is now fixed.
   YouTube still returns LOGIN_REQUIRED to all ten client types from the Railway IP. See BLUEPRINT.md.
   Read `[ytdlp]` lines in Railway logs before theorizing
@@ -101,6 +104,8 @@ See BLUEPRINT.md → Known Bugs section for full detail.
 - NEVER change audio settings (6kHz, 0.9x, loudnorm values)
 - NEVER use sys.executable in subprocess — always use VENV_PYTHON
 - Always lazy-load heavy imports (torch, demucs, whisper) inside endpoints
+- NEVER run Demucs, Whisper, or anything slower than ~10s inside a request handler. Queue it
+  through backend/jobs.py. Cloudflare drops requests at 100s and async handlers block the loop
 - sitecustomize.py patch must be in Docker image AND local venv
 - NEVER rename an element id that app.js or studio.js looks up (tests/test_site.py enforces this)
 - Pages use placeholders filled by backend/pages.py. Load them through the app, not as files

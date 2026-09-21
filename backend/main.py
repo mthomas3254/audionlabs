@@ -1,3 +1,4 @@
+import sys
 import uuid
 from pathlib import Path
 from typing import Optional, Dict
@@ -9,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import pages
+from .jobs import JobStore
 
 from .config import (
     UPLOADS_DIR,
@@ -26,6 +28,9 @@ from .services.file_manager import create_track_paths, TrackPaths
 ensure_dirs()
 
 app = FastAPI(title="AudionLabs", version="1.0.0")
+
+# Background jobs for Demucs and Whisper. See backend/jobs.py for why.
+jobs = JobStore()
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
@@ -99,54 +104,84 @@ async def sitemap_xml():
 # --- API routes ---
 
 
-@app.post("/transcribe")
+def _job_failed(what: str, exc: Exception, visitor_message: str) -> RuntimeError:
+    """Log the full failure for the operator and hand the visitor a short message."""
+    print(f"[{what}] {exc}", file=sys.stderr, flush=True)
+    return RuntimeError(visitor_message)
+
+
+@app.post("/transcribe", status_code=202)
 async def transcribe_endpoint(
     file: UploadFile = File(None),
     youtube_url: str = Form(None),
 ):
+    """Queue a transcription and return its job id. Poll /jobs/{id} for the result."""
     if not file and not youtube_url:
         raise HTTPException(status_code=400, detail="Provide either a file or a YouTube URL.")
 
     audio_path: Optional[Path] = None
-    cleanup = False
-
-    try:
-        if youtube_url:
-            from .core.downloader import download_media
-            try:
-                audio_path = download_media(youtube_url, "mp3")
-            except (ValueError, RuntimeError) as e:
-                raise HTTPException(status_code=400, detail=str(e))
-        else:
-            ext = Path(file.filename or "audio.mp3").suffix.lower()
-            if ext not in (".mp3", ".wav", ".m4a", ".ogg", ".flac"):
-                raise HTTPException(status_code=400, detail="Unsupported audio format.")
-            audio_path = TRANSCRIPTS_DIR / f"{uuid.uuid4()}{ext}"
-            cleanup = True
+    if not youtube_url:
+        ext = Path(file.filename or "audio.mp3").suffix.lower()
+        if ext not in (".mp3", ".wav", ".m4a", ".ogg", ".flac"):
+            raise HTTPException(status_code=400, detail="Unsupported audio format.")
+        audio_path = TRANSCRIPTS_DIR / f"{uuid.uuid4()}{ext}"
+        try:
             with audio_path.open("wb") as f:
-                content = await file.read()
-                f.write(content)
+                f.write(await file.read())
+        finally:
             await file.close()
 
-        from .core.transcribe_engine import transcribe_audio
-        result = transcribe_audio(audio_path, ANTHROPIC_API_KEY)
-        return JSONResponse(result)
+    def work(set_stage):
+        path = audio_path
+        try:
+            if youtube_url:
+                set_stage("Fetching audio from YouTube")
+                from .core.downloader import download_media
+                try:
+                    path = download_media(youtube_url, "mp3")
+                except (ValueError, RuntimeError) as e:
+                    raise RuntimeError(str(e))
+            set_stage("Transcribing audio")
+            from .core.transcribe_engine import transcribe_audio
+            try:
+                return transcribe_audio(path, ANTHROPIC_API_KEY)
+            except Exception as e:
+                raise _job_failed("transcribe", e, "Transcription failed. Try a shorter or different file.")
+        finally:
+            if audio_path and audio_path.exists():
+                audio_path.unlink(missing_ok=True)
 
-    finally:
-        if cleanup and audio_path and audio_path.exists():
-            audio_path.unlink(missing_ok=True)
+    job = jobs.submit("transcribe", work)
+    return {"job_id": job.id, "status": job.status}
+
 
 @app.get("/health")
 async def health():
     return {"status": "ok", "demucs_model": DEMUCS_MODEL}
 
 
-@app.post("/process_audio")
+@app.get("/jobs/{job_id}")
+async def job_status(job_id: str):
+    job = jobs.get(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Unknown or expired job.")
+    data = job.public()
+    if job.status == "queued":
+        data["position"] = jobs.queue_position(job)
+    return JSONResponse(data, headers={"Cache-Control": "no-store"})
+
+
+@app.post("/process_audio", status_code=202)
 async def process_audio(
     file: UploadFile = File(...),
     split_stems_flag: bool = Form(False),
     slowed_reverb_flag: bool = Form(False),
 ):
+    """Save the upload, queue the processing, and return a job id at once.
+
+    Demucs takes minutes on this CPU, far past Cloudflare's 100 second limit,
+    so the work happens in the background and the page polls /jobs/{id}.
+    """
     allowed_types = ("audio/mpeg", "audio/wav", "audio/x-wav")
     if file.content_type not in allowed_types:
         raise HTTPException(status_code=400, detail="Only MP3 and WAV files are supported.")
@@ -156,58 +191,58 @@ async def process_audio(
     if ext not in [".mp3", ".wav"]:
         raise HTTPException(status_code=400, detail="File extension must be .mp3 or .wav.")
 
+    if not split_stems_flag and not slowed_reverb_flag:
+        raise HTTPException(status_code=400, detail="Select at least one processing option.")
+
     song_name = Path(original_name).stem
     track_paths: TrackPaths = create_track_paths(ext)
 
     try:
         with track_paths.original_path.open("wb") as buffer:
-            content = await file.read()
-            buffer.write(content)
+            buffer.write(await file.read())
     finally:
         await file.close()
 
-    base_original_url = f"/media/original/{track_paths.track_id}/{track_paths.original_path.name}"
+    def work(set_stage):
+        response: Dict[str, Optional[object]] = {
+            "track_id": track_paths.track_id,
+            "original": {"url": f"/media/original/{track_paths.track_id}/{track_paths.original_path.name}"},
+            "stems": None,
+            "slowed_mix": None,
+        }
 
-    response: Dict[str, Optional[object]] = {
-        "track_id": track_paths.track_id,
-        "original": {"url": base_original_url},
-        "stems": None,
-        "slowed_mix": None,
-    }
-
-    stems_paths: Optional[Dict[str, Path]] = None
-
-    if split_stems_flag:
-        from .core.demucs_engine import split_stems
-        try:
-            stems_paths = split_stems(track_paths)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Demucs error: {e}")
-
-    if split_stems_flag and stems_paths:
-        stems_urls = {
-            stem_name: {
-                "url": f"/media/stems/{track_paths.track_id}/{path.name}",
-                "download_name": f"{song_name}_{stem_name}.wav",
+        if split_stems_flag:
+            set_stage("Separating stems")
+            from .core.demucs_engine import split_stems
+            try:
+                stems_paths = split_stems(track_paths)
+            except Exception as e:
+                raise _job_failed("demucs", e, "Stem separation failed. Try a shorter MP3 or WAV file.")
+            response["stems"] = {
+                stem_name: {
+                    "url": f"/media/stems/{track_paths.track_id}/{path.name}",
+                    "download_name": f"{song_name}_{stem_name}.wav",
+                }
+                for stem_name, path in stems_paths.items()
             }
-            for stem_name, path in stems_paths.items()
-        }
-        response["stems"] = stems_urls
 
-    if slowed_reverb_flag:
-        from .core.slowed_engine import create_slowed_reverb_mix
-        slowed_output_path = track_paths.slowed_dir / "slowed_mix.wav"
-        try:
-            create_slowed_reverb_mix(track_paths.original_path, slowed_output_path)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Slowed+reverb error: {e}")
+        if slowed_reverb_flag:
+            set_stage("Applying slowed + reverb")
+            from .core.slowed_engine import create_slowed_reverb_mix
+            slowed_output_path = track_paths.slowed_dir / "slowed_mix.wav"
+            try:
+                create_slowed_reverb_mix(track_paths.original_path, slowed_output_path)
+            except Exception as e:
+                raise _job_failed("slowed", e, "The slowed render failed. Try a different file.")
+            response["slowed_mix"] = {
+                "url": f"/media/slowed/{track_paths.track_id}/{slowed_output_path.name}",
+                "download_name": f"{song_name}_slowed_reverb.wav",
+            }
 
-        response["slowed_mix"] = {
-            "url": f"/media/slowed/{track_paths.track_id}/{slowed_output_path.name}",
-            "download_name": f"{song_name}_slowed_reverb.wav",
-        }
+        return response
 
-    return JSONResponse(response)
+    job = jobs.submit("process_audio", work)
+    return {"job_id": job.id, "status": job.status}
 
 
 @app.post("/download")

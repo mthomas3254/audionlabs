@@ -34,6 +34,70 @@
   window.addEventListener("resize", positionNavIndicator);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(positionNavIndicator);
 
+  // --- Background jobs ---
+  // Stem splitting and transcription take minutes. The server answers the upload
+  // at once with a job id, and the page polls until the job is done. Each poll is
+  // instant, so nothing ever runs into the 100 second limit at the network edge.
+  var STAGE_TEXT = {
+    "Waiting in line": "Waiting for a free slot...",
+    "Starting": "Starting...",
+    "Separating stems": "Separating stems...",
+    "Applying slowed + reverb": "Applying slowed + reverb...",
+    "Fetching audio from YouTube": "Fetching audio from YouTube...",
+    "Transcribing audio": "Transcribing audio...",
+    "Done": "Done!"
+  };
+
+  function jobLabel(job) {
+    if (job.status === "queued") {
+      return job.position > 0
+        ? "Waiting for a free slot (" + job.position + " ahead)..."
+        : "Waiting for a free slot...";
+    }
+    return STAGE_TEXT[job.stage] || (job.stage ? job.stage + "..." : "Processing...");
+  }
+
+  // Submits a form to a job endpoint and resolves with the finished result.
+  // onUpdate(job) fires on every poll. isCancelled() lets the caller abandon
+  // the wait, for example when the visitor starts over.
+  function runJob(url, form, onUpdate, isCancelled) {
+    return fetch(url, { method: "POST", body: form }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (body) {
+        if (!res.ok) throw new Error(body.detail || "Server error (" + res.status + ")");
+        if (!body.job_id) throw new Error("The server did not start the job. Please try again.");
+        return body.job_id;
+      });
+    }).then(function (jobId) {
+      return new Promise(function (resolve, reject) {
+        var failures = 0;
+        function poll() {
+          if (isCancelled && isCancelled()) return reject(new Error("cancelled"));
+          fetch("/jobs/" + encodeURIComponent(jobId), { cache: "no-store" }).then(function (res) {
+            if (res.status === 404) throw new Error("expired");
+            if (!res.ok) throw new Error("status " + res.status);
+            return res.json();
+          }).then(function (job) {
+            failures = 0;
+            if (onUpdate) onUpdate(job);
+            if (job.status === "done") return resolve(job.result);
+            if (job.status === "error") return reject(new Error(job.error || "Processing failed. Please try again."));
+            setTimeout(poll, 2000);
+          }).catch(function (err) {
+            if (err.message === "expired") {
+              return reject(new Error("That job has expired. Please start again."));
+            }
+            failures++;
+            if (failures >= 6) {
+              return reject(new Error("Lost contact with the server. Check your connection and try again."));
+            }
+            setTimeout(poll, 3000);
+          });
+        }
+        poll();
+      });
+    });
+  }
+
   // --- Landing page: decorative stem waveform ---
   if (page === "/") {
     document.querySelectorAll(".bars").forEach(function (el) {
@@ -83,6 +147,8 @@
 
     var selectedFile = null;
     var progressTimer = null;
+    var jobToken = 0;          // bumped whenever the visitor starts over
+    var serverStage = null;    // label from the server wins over the simulation
     var mixerRoot = document.getElementById("mixer");
     var mixer = null;
     var uploadCard = dropZone.closest(".card");
@@ -106,6 +172,8 @@
     }
 
     function resetToUpload() {
+      jobToken++;
+      serverStage = null;
       closeMixer();
       selectedFile = null;
       fileInput.value = "";
@@ -180,7 +248,7 @@
         var label = stages[stageIndex][0];
         var targetPct = stages[stageIndex][1];
         var duration = stages[stageIndex][2];
-        statusStage.textContent = label;
+        if (!serverStage) statusStage.textContent = label;
 
         var startPct = currentPct;
         var delta = targetPct - startPct;
@@ -267,18 +335,17 @@
       form.append("split_stems_flag", wantsStems.toString());
       form.append("slowed_reverb_flag", wantsSlowed.toString());
 
+      var token = ++jobToken;
+      serverStage = null;
+
       try {
-        var res = await fetch("/process_audio", {
-          method: "POST",
-          body: form,
-        });
-
-        if (!res.ok) {
-          var body = await res.json().catch(function () { return {}; });
-          throw new Error(body.detail || "Server error (" + res.status + ")");
-        }
-
-        var data = await res.json();
+        var data = await runJob("/process_audio", form, function (job) {
+          serverStage = jobLabel(job);
+          statusStage.textContent = serverStage;
+          statusText.textContent = job.status === "queued"
+            ? "Your track is in the queue"
+            : "This can take a few minutes. Keep this tab open.";
+        }, function () { return token !== jobToken; });
 
         clearProgressTimer();
         statusStage.textContent = "Done!";
@@ -286,6 +353,7 @@
 
         setTimeout(function () { renderUploadResults(data); }, 400);
       } catch (err) {
+        if (err.message === "cancelled") return;
         showUploadError(err.message || "Something went wrong. Please try again.");
       }
     });
@@ -358,6 +426,7 @@
     var alProgressFill      = document.getElementById("al-progress-fill");
     var alProgressText      = document.getElementById("al-progress-text");
     var alProgressTimer     = null;
+    var alServerStage       = null;
 
     var selectedFormat = "mp3";
     var lastFilePath = null;
@@ -502,7 +571,7 @@
         var label = stages[stageIndex][0];
         var targetPct = stages[stageIndex][1];
         var duration = stages[stageIndex][2];
-        alProgressText.textContent = label;
+        if (!alServerStage) alProgressText.textContent = label;
 
         var startPct = currentPct;
         var delta = targetPct - startPct;
@@ -568,17 +637,11 @@
         form.append("split_stems_flag", wantsStems.toString());
         form.append("slowed_reverb_flag", wantsSlowed.toString());
 
-        var resp = await fetch("/process_audio", {
-          method: "POST",
-          body: form,
+        alServerStage = null;
+        var data = await runJob("/process_audio", form, function (job) {
+          alServerStage = jobLabel(job);
+          alProgressText.textContent = alServerStage;
         });
-
-        if (!resp.ok) {
-          var err = await resp.json().catch(function () { return {}; });
-          throw new Error(err.detail || "Processing failed");
-        }
-
-        var data = await resp.json();
 
         stopAlProgress();
         alProgressText.textContent = "Done!";
@@ -674,6 +737,8 @@
     var tcActiveTab     = "upload";
     var tcProgressTimer = null;
     var tcResultData    = null;
+    var tcJobToken      = 0;
+    var tcServerStage   = null;
 
     function tcShow(el) { el.hidden = false; }
     function tcHide(el) { el.hidden = true; }
@@ -759,7 +824,7 @@
         var label = stages[stageIndex][0];
         var targetPct = stages[stageIndex][1];
         var duration = stages[stageIndex][2];
-        tcStatusStage.textContent = label;
+        if (!tcServerStage) tcStatusStage.textContent = label;
 
         var startPct = currentPct;
         var delta = targetPct - startPct;
@@ -802,6 +867,8 @@
     }
 
     function tcReset() {
+      tcJobToken++;
+      tcServerStage = null;
       tcSelectedFile = null;
       tcResultData = null;
       tcFileInput.value = "";
@@ -858,18 +925,17 @@
 
       tcTranscribeBtn.disabled = true;
 
+      var tcToken = ++tcJobToken;
+      tcServerStage = null;
+
       try {
-        var res = await fetch("/transcribe", {
-          method: "POST",
-          body: form,
-        });
-
-        if (!res.ok) {
-          var body = await res.json().catch(function () { return {}; });
-          throw new Error(body.detail || "Server error (" + res.status + ")");
-        }
-
-        var data = await res.json();
+        var data = await runJob("/transcribe", form, function (job) {
+          tcServerStage = jobLabel(job);
+          tcStatusStage.textContent = tcServerStage;
+          tcStatusText.textContent = job.status === "queued"
+            ? "Your file is in the queue"
+            : "This can take a few minutes. Keep this tab open.";
+        }, function () { return tcToken !== tcJobToken; });
         tcResultData = data;
 
         tcClearProgress();
@@ -878,7 +944,7 @@
 
         setTimeout(function () { tcRenderResults(data); }, 400);
       } catch (err) {
-        tcShowError(err.message || "Something went wrong. Please try again.");
+        if (err.message !== "cancelled") tcShowError(err.message || "Something went wrong. Please try again.");
       } finally {
         tcTranscribeBtn.disabled = false;
       }
