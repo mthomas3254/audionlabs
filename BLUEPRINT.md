@@ -99,7 +99,7 @@ audionlabs/
 │   ├── config.py                # Paths, env vars, ensure_dirs()
 │   ├── core/
 │   │   ├── __init__.py
-│   │   ├── demucs_engine.py     # split_stems() — Demucs CLI subprocess
+│   │   ├── demucs_engine.py     # split_stems() — local CPU Demucs, or Modal GPU with CPU fallback
 │   │   ├── slowed_engine.py     # create_slowed_reverb_mix() — FFmpeg
 │   │   ├── downloader.py        # download_media() — yt-dlp subprocess
 │   │   └── transcribe_engine.py # transcribe_audio() — Whisper + Claude API
@@ -120,7 +120,9 @@ audionlabs/
 │   ├── studio.js                # Live Slowed + Reverb studio
 │   ├── mixer.js                 # Live stem mixer
 │   └── favicon.svg
-├── tests/                       # pytest: pages, AdSense, id contract, downloader
+├── modal_app/
+│   └── demucs_gpu.py            # Modal GPU function: htdemucs on an A10G, weights baked into the image
+├── tests/                       # pytest: pages, AdSense, id contract, downloader, jobs, GPU backend
 ├── uploads/                     # Runtime: uploaded audio (ephemeral on Railway)
 ├── downloads/                   # Runtime: YouTube downloads (ephemeral)
 ├── separated/                   # Runtime: Demucs output (ephemeral)
@@ -351,6 +353,9 @@ restartPolicyType = "on_failure"
 | YTDLP_PLAYER_CLIENTS | all | Optional, diagnostics only. Logs YouTube's answer per client type |
 | SITE_URL | https://audionlabs.ai | Optional. Used in robots.txt and sitemap.xml |
 | JOB_WORKERS | 1 | Optional. Concurrent background jobs. Raise only with more CPU |
+| DEMUCS_BACKEND | modal | Optional. Send splits to the Modal GPU. Unset = local CPU |
+| MODAL_TOKEN_ID | ak-... | Required with DEMUCS_BACKEND=modal. From `modal token new` |
+| MODAL_TOKEN_SECRET | as-... | Required with DEMUCS_BACKEND=modal. From `modal token new` |
 
 ### DNS (Cloudflare)
 - audionlabs.ai → CNAME → Railway (Proxied, orange cloud)
@@ -468,6 +473,7 @@ Cloudflare CNAME flattening solves this — audionlabs.ai works without www.
 | Docs | Apr 4 | Full BLUEPRINT + CLAUDE.md cleanup and status update | — |
 | Bug 14 try | Apr 4 | PO Token provider (bgutil). Never actually ran: Node 20 was too old for it | 6e21f93 |
 | Revamp v2 | Sep 19 | Light pill UI on all pages, live Slowed+Reverb studio, live stem mixer, AdSense plumbing, privacy/terms, tests | see git log |
+| GPU prep | Sep 21 | Modal GPU backend for Demucs with CPU fallback, tests, docs. Not switched on until the owner creates the Modal account | see git log |
 | Bug 15 | Sep 21 | Background job queue for stems and transcription. Fixes Cloudflare 524 and the frozen site during a split | see git log |
 | Bug 14 dig | Sep 19 | Found and fixed the broken yt-dlp toolchain (Node 22, bgutil 2.0.0, EJS). Proved YouTube still refuses the Railway IP on all client types | b024af0, a4cb954 |
 
@@ -548,3 +554,14 @@ hardware does. Options, roughly in order of cost:
 4. **GPU host for the whole app.** Simpler wiring, but a GPU box costs money around the clock.
 
 Recommended next step when there is traffic: option 3.
+
+### Option 3 is built (Sep 21, 2026) and waits only on the account
+- `modal_app/demucs_gpu.py` defines the GPU function. Deploy from a machine where the owner
+  has run `modal setup`: `modal deploy modal_app/demucs_gpu.py`. Smoke test one file with
+  `modal run modal_app/demucs_gpu.py --path song.mp3`.
+- `backend/core/demucs_engine.py` calls it when `DEMUCS_BACKEND=modal`, and falls back to the
+  local CPU path if the call fails for any reason, so a Modal outage only slows splits down.
+- Railway needs three variables: `DEMUCS_BACKEND=modal`, `MODAL_TOKEN_ID`, `MODAL_TOKEN_SECRET`.
+- Cost: Modal's free tier includes $30 of credit per month. An A10G is about $0.0003 per
+  second, so a song is roughly half a cent. Replicate would be about 4 to 5 cents per song.
+- The app name and function name are pinned in both files and checked by a test.

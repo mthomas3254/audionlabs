@@ -11,4 +11,5 @@ soundfile
 demucs
 openai-whisper
 anthropic
+modal
 --extra-index-url https://download.pytorch.org/whl/cpu

@@ -53,6 +53,7 @@ DJs, remix artists, and producers. Four tools, one platform:
 - [x] Live stem mixer (mixer.js)
 - [x] AdSense plumbing, privacy, terms, ads.txt (waiting on publisher id)
 - [x] pytest suite (tests/)
+- [x] Modal GPU backend for stems, built and tested, OFF until DEMUCS_BACKEND=modal + Modal tokens are set
 - [ ] **YouTube bot detection (Bug 14 — toolchain fixed Sep 19, but YouTube refuses the Railway IP)**
 - [ ] Rate limiting
 - [ ] File size limits (100MB)
@@ -68,6 +69,9 @@ DJs, remix artists, and producers. Four tools, one platform:
 - Demucs model: htdemucs
 
 ## Next Session Priorities (in order)
+0a. **Modal GPU** — owner signs up at modal.com and runs `pip install modal && modal setup`. Then:
+    `modal deploy modal_app/demucs_gpu.py`, `modal token new`, set DEMUCS_BACKEND=modal and both
+    MODAL_TOKEN_* in Railway. Splits drop from ~2 minutes to ~20 seconds
 0. **AdSense** — owner creates the account, then set ADSENSE_CLIENT and ADSENSE_SLOT in Railway
 1. **Bug 14** — owner decision: YTDLP_PROXY (residential proxy), YTDLP_COOKIES_FILE, or retire the downloader
 2. **Security hardening** — rate limiting, file size limits, file type validation, Cloudflare WAF
